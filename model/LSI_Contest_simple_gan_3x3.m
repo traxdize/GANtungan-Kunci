@@ -14,11 +14,11 @@ latent_dim = 2;        % Latent variables
 D_hidden_L = 3;      % Number of hidden layers (Discriminator)
 G_hidden_L = 3;      % Number of hidden layers (Generator)
 
-num_epochs = 30000;     % Epochs 
+num_epochs = 3000000;     % Epochs 
 %num_epochs = 2;     % Epochs 
 eta_D = 0.001;
 eta_G = 0.001;
-save_path = "trained_simple_gan.mat";
+save_path = "output/trained_simple_gan.mat";
 DGL = 2;                 % DとGの学習比D/G = 2 -> D:G = 2:1
 
 % ======== Train data, 学習データ (3x3 O+)  ========
@@ -223,8 +223,8 @@ end
 sgtitle("Generated Samples (Trained GAN)");
 
 % Store images 画像保存
-exportgraphics(gcf,"generated_samples.png");
-fprintf("Store images : 'generated_samples.png' \n");
+exportgraphics(gcf,"image/generated_samples.png");
+fprintf("Store images : 'image/generated_samples.png' \n");
 
 % === Display loss curve 損失表示 ===
 figure;
@@ -233,5 +233,5 @@ plot(loss_G,'b','DisplayName','Generator Loss');
 legend; xlabel('Epoch'); ylabel('Loss');
 title('GAN Training Loss');
 grid on;
-exportgraphics(gcf,"loss_curve.png");
-fprintf("Sore loss curve :  'loss_curve.png' \n");
+exportgraphics(gcf,"image/loss_curve.png");
+fprintf("Sore loss curve :  'image/loss_curve.png' \n");
