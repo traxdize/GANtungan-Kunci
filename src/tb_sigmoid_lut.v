@@ -1,18 +1,18 @@
-// File: tanh_testbench.v
-// Description: Combines the robust tanh_lut module and its testbench for single-file simulation.
+// File: sigmoid_testbench.v
+// Description: Combines the robust sigmoid_lut module and its testbench for single-file simulation.
 
 `timescale 1ns / 1ps
 
 // =========================================================================
-// DEVICE UNDER TEST (DUT): tanh_lut
-// Robust Tanh Look-Up Table (LUT) implementation with explicit clamping.
+// DEVICE UNDER TEST (DUT): sigmoid_lut
+// Robust Sigmoid Look-Up Table (LUT) implementation with explicit clamping.
 // Format: Q1.7.8 (16 bits total), Size: 1024 entries (10 address bits)
-// NOTE: Requires 'tanh_lut_mem.hex' file in the same directory.
+// NOTE: Requires 'sigmoid_lut_mem.hex' file in the same directory.
 // =========================================================================
 
-module tanh_lut (
+module sigmoid_lut (
     input  [15:0] z_q1_7_8,     // Input Z signal (16-bit scaled integer, Q1.7.8)
-    output [15:0] a_tanh        // Output A_tanh (16-bit scaled integer, Q1.7.8)
+    output [15:0] a_sigmoid     // Output A_sigmoid (16-bit scaled integer, Q1.7.8)
 );
 
 // Configuration Parameters
@@ -21,25 +21,23 @@ localparam DATA_WIDTH   = 16;
 localparam ROM_DEPTH    = 1 << ADDRESS_BITS; // 1024 entries
 
 // Q1.7.8 fixed-point values for clamping:
-// +1.0 * 256 = 256
-localparam MAX_POSITIVE_VAL = 16'h0100;
-// -1.0 * 256 = -256 (Two's Complement: 16'hFF00)
-localparam MAX_NEGATIVE_VAL = 16'hFF00;
+// Sigmoid output max is 1.0, min is 0.0.
+localparam SIGMOID_MAX_VAL   = 16'h0100; // +1.0 * 256 = 256
+localparam SIGMOID_MIN_VAL   = 16'h0000; // +0.0 * 256 = 0
 
-// Thresholds for Clamping Check:
-// Check inputs >= 6.0 and <= -6.0.
-// 6.0 in Q1.7.8: 6.0 * 256 = 1536 (16'h0600)
+// Thresholds for Clamping Check (Range: [-6.0, 6.0]):
+// 6.0 in Q1.7.8: 16'h0600
 localparam POS_CLAMP_THRESHOLD = 16'h0600; 
-// -6.0 in Q1.7.8: -6.0 * 256 = -1536 (Two's Complement: 16'hFA00)
+// -6.0 in Q1.7.8: 16'hFA00
 localparam NEG_CLAMP_THRESHOLD = 16'hFA00; 
 
 // Internal ROM array (1024 entries, 16 bits wide)
-reg [DATA_WIDTH-1:0] TANH_ROM [0:ROM_DEPTH-1];
+reg [DATA_WIDTH-1:0] SIGMOID_ROM [0:ROM_DEPTH-1];
 
 // --- 1. Memory Initialization ---
 initial begin
-    $readmemh("tanh_lut_mem.hex", TANH_ROM);
-    $display("TANH_ROM initialized successfully with %0d entries.", ROM_DEPTH);
+    $readmemh("sigmoid_lut_mem.hex", SIGMOID_ROM);
+    $display("SIGMOID_ROM initialized successfully with %0d entries.", ROM_DEPTH);
 end
 
 // --- 2. Address Generation ---
@@ -48,33 +46,33 @@ wire [ADDRESS_BITS-1:0] rom_address = z_q1_7_8[14:5];
 
 // --- 3. Combined Clamping and ROM Read Operation ---
 // Uses continuous assign for combinational logic.
-assign a_tanh = 
-    // Case 1: Extreme Positive Saturation (Z >= 6.0)
-    ($signed(z_q1_7_8) >= $signed(POS_CLAMP_THRESHOLD)) ? MAX_POSITIVE_VAL :
+assign a_sigmoid = 
+    // Case 1: Extreme Positive Saturation (Z >= 6.0) -> Output 1.0
+    ($signed(z_q1_7_8) >= $signed(POS_CLAMP_THRESHOLD)) ? SIGMOID_MAX_VAL :
     
-    // Case 2: Extreme Negative Saturation (Z <= -6.0)
-    ($signed(z_q1_7_8) <= $signed(NEG_CLAMP_THRESHOLD)) ? MAX_NEGATIVE_VAL :
+    // Case 2: Extreme Negative Saturation (Z <= -6.0) -> Output 0.0
+    ($signed(z_q1_7_8) <= $signed(NEG_CLAMP_THRESHOLD)) ? SIGMOID_MIN_VAL :
     
     // Case 3: Within the Critical Range, use the LUT
-    TANH_ROM[rom_address];
+    SIGMOID_ROM[rom_address];
 
 endmodule
 
 // =========================================================================
 // TESTBENCH (TB)
-// Applies multiple test vectors to the tanh_lut module.
+// Applies multiple test vectors to the sigmoid_lut module.
 // =========================================================================
 
-module tb_tanh_lut;
+module tb_sigmoid_lut;
 
     // --- Signals for I/O ---
     reg [15:0] z_in;             // Input Z signal (Q1.7.8)
-    wire [15:0] a_out;            // Output A_tanh signal (Q1.7.8)
+    wire [15:0] a_out;            // Output A_sigmoid signal (Q1.7.8)
     
     // --- Instantiate the DUT ---
-    tanh_lut DUT (
+    sigmoid_lut DUT (
         .z_q1_7_8 (z_in),
-        .a_tanh   (a_out)
+        .a_sigmoid (a_out)
     );
 
     // --- Utility Function: Convert Q1.7.8 Fixed-Point to Float ---
@@ -88,41 +86,42 @@ module tb_tanh_lut;
     // --- Simulation Control and Test Vectors ---
     initial begin
         // Setup logging
-        $dumpfile("tb_tanh_lut.vcd");
-        $dumpvars(0, tb_tanh_lut);
+        $dumpfile("tb_sigmoid_lut.vcd");
+        $dumpvars(0, tb_sigmoid_lut);
         
         $display("-----------------------------------------------------------------");
-        $display("TANH LUT Simulation (Q1.7.8) Trace");
+        $display("SIGMOID LUT Simulation (Q1.7.8) Trace");
         $display("-----------------------------------------------------------------");
         $display(" Test | Z_Input(Q) | Z_Input(Float) | Addr | A_Output(Q) | A_Output(Float)");
         $display("-----------------------------------------------------------------");
 
         // --- Test Vectors (Q1.7.8 Scaled Integers) ---
         
-        // 1. Zero Input (Z=0.0) -> Tanh(0)=0.0
+        // 1. Zero Input (Z=0.0) -> Sigmoid(0)=0.5
+        // 0.5 * 256 = 128 (16'h0080)
         test_case(1, 16'h0000); 
 
-        // 2. Positive Small (Z=0.5) -> Tanh ~0.46
-        // 0.5 * 256 = 128
-        test_case(2, 16'h0080);
+        // 2. Positive Small (Z=1.0) -> Sigmoid ~0.73
+        // 1.0 * 256 = 256 (16'h0100)
+        test_case(2, 16'h0100);
         
-        // 3. Negative Small (Z=-0.5) -> Tanh ~-0.46
-        // -0.5 * 256 = -128
-        test_case(3, 16'hFF80); 
+        // 3. Negative Small (Z=-1.0) -> Sigmoid ~0.27
+        // -1.0 * 256 = -256 (16'hFF00)
+        test_case(3, 16'hFF00); 
         
-        // 4. Positive Edge of Sampled Range (Z ~5.0) -> Tanh ~1.0
-        // 5.0 * 256 = 1280. Using 1279 (16'h04FF) to be just inside the range.
-        test_case(4, 16'h04FF);
+        // 4. Positive Saturation Edge (Z ~6.0) -> Should be near 1.0
+        // 5.99 * 256 = 1533 (16'h05FD)
+        test_case(4, 16'h05FD);
 
-        // 5. Negative Edge of Sampled Range (Z ~-5.0) -> Tanh ~-1.0
-        // -5.0 * 256 = -1280. Using -1279 (16'hFB01) to be just inside the range.
-        test_case(5, 16'hFB01);
+        // 5. Negative Saturation Edge (Z ~-6.0) -> Should be near 0.0
+        // -5.99 * 256 = -1533 (16'hFA03)
+        test_case(5, 16'hFA03);
 
         // 6. Positive Clamped Input (Z=10.0) -> Should clamp to +1.0 (16'h0100)
         // 10.0 * 256 = 2560 (16'h0A00)
         test_case(6, 16'h0A00); 
 
-        // 7. Negative Clamped Input (Z=-10.0) -> Should clamp to -1.0 (16'hFF00)
+        // 7. Negative Clamped Input (Z=-10.0) -> Should clamp to 0.0 (16'h0000)
         // -10.0 * 256 = -2560 (16'hF600)
         test_case(7, 16'hF600); 
         
@@ -130,9 +129,9 @@ module tb_tanh_lut;
         // 16'h7FFF
         test_case(8, 16'h7FFF);
         
-        // 9. Test minimum hardware range (Z=-128.0) -> Should clamp to -1.0
-        // 16'h8000
-        test_case(9, 16'h8000);
+        // 9. Test large negative value (Z=-30.0) -> Should clamp to 0.0
+        // -30.0 * 256 = -7680 (16'hE200)
+        test_case(9, 16'hE200);
 
         $display("-----------------------------------------------------------------");
         $finish;
