@@ -36,7 +36,7 @@ reg [DATA_WIDTH-1:0] SIGMOID_ROM [0:ROM_DEPTH-1];
 
 // --- 1. Memory Initialization ---
 initial begin
-    $readmemh("sigmoid_lut_mem.hex", SIGMOID_ROM);
+    $readmemh("mem/sigmoid_lut_mem.hex", SIGMOID_ROM);
     $display("SIGMOID_ROM initialized successfully with %0d entries.", ROM_DEPTH);
 end
 
@@ -86,7 +86,7 @@ module tb_sigmoid_lut;
     // --- Simulation Control and Test Vectors ---
     initial begin
         // Setup logging
-        $dumpfile("tb_sigmoid_lut.vcd");
+        $dumpfile("wave/tb_sigmoid_lut.vcd");
         $dumpvars(0, tb_sigmoid_lut);
         
         $display("-----------------------------------------------------------------");

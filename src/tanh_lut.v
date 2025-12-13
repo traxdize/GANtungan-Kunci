@@ -32,7 +32,7 @@ reg [DATA_WIDTH-1:0] TANH_ROM [0:ROM_DEPTH-1];
 // --- 1. Memory Initialization ---
 initial begin
     // Load the fixed-point Tanh values from the .hex file
-    $readmemh("tanh_lut_mem.hex", TANH_ROM);
+    $readmemh("mem/tanh_lut_mem.hex", TANH_ROM);
     $display("TANH_ROM initialized successfully with %0d entries.", ROM_DEPTH);
 end
 

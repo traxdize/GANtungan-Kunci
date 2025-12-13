@@ -38,7 +38,7 @@ reg [DATA_WIDTH-1:0] TANH_ROM [0:ROM_DEPTH-1];
 
 // --- 1. Memory Initialization ---
 initial begin
-    $readmemh("tanh_lut_mem.hex", TANH_ROM);
+    $readmemh("mem/tanh_lut_mem.hex", TANH_ROM);
     $display("TANH_ROM initialized successfully with %0d entries.", ROM_DEPTH);
 end
 
@@ -88,7 +88,7 @@ module tb_tanh_lut;
     // --- Simulation Control and Test Vectors ---
     initial begin
         // Setup logging
-        $dumpfile("tb_tanh_lut.vcd");
+        $dumpfile("wave/tb_tanh_lut.vcd");
         $dumpvars(0, tb_tanh_lut);
         
         $display("-----------------------------------------------------------------");

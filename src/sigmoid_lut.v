@@ -30,7 +30,7 @@ reg [DATA_WIDTH-1:0] SIGMOID_ROM [0:ROM_DEPTH-1];
 // --- 1. Memory Initialization ---
 initial begin
     // Load the fixed-point Sigmoid values from the .hex file
-    $readmemh("sigmoid_lut_mem.hex", SIGMOID_ROM);
+    $readmemh("mem/sigmoid_lut_mem.hex", SIGMOID_ROM);
     $display("SIGMOID_ROM initialized successfully with %0d entries.", ROM_DEPTH);
 end
 
