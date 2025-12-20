@@ -14,24 +14,23 @@ latent_dim = 2;        % Latent variables
 D_hidden_L = 3;      % Number of hidden layers (Discriminator)
 G_hidden_L = 3;      % Number of hidden layers (Generator)
 
-num_epochs = 3000000;     % Epochs 
+num_epochs = 300000;     % Epochs 
 %num_epochs = 2;     % Epochs 
 eta_D = 0.001;
 eta_G = 0.001;
 save_path = "output/trained_simple_gan.mat";
 DGL = 2;                 % DとGの学習比D/G = 2 -> D:G = 2:1
 
-% ======== Train data, 学習データ (3x3 O+)  ========
-circle = [1 1 1; ...
-              1 -1 1; ...
-              1 1 1]';
+% ======== Train data, 学習データ ========
+% Diagonal Line
+diag_line = [ -1 1 1; ...
+             1  -1 1; ...
+             1 1  -1]';
 
-cross = [-1 1 -1; ...
-               1 1 1; ...
-               -1 1 -1]';
+% Vertical Bar
 
-%data = [circle(:)'; cross(:)'; triangle(:)'];  % 3x25
-data = [circle(:)'; cross(:)'];  % 3x25
+% Combine the new patterns into the data matrix
+data = [diag_line(:)'];
 num_data = size(data,1);
 
 % ===  Loss data 損失記録変数 ===
