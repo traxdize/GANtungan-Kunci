@@ -44,7 +44,7 @@ module tanh_lut (
     
     // Slice [22:13] gives us 10 bits.
     // Max index 1023 corresponds to 1023 * 0.125 = 127.8 (covers the 6.0 clamp range easily).
-    wire [ADDRESS_BITS-1:0] rom_address = z_abs[22:13];
+    wire [ADDRESS_BITS-1:0] rom_address = z_abs[18:9];
     
     wire signed [31:0] rom_data = TANH_ROM[rom_address];
 
