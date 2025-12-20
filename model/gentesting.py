@@ -32,27 +32,27 @@ def q_tanh(x):
 # 2. YOUR EXTRACTED WEIGHTS (From previous chat)
 # ==========================================
 # Generator Hidden (G2)
-wg2_1 = [hex_to_int('FFFFFA3B'), hex_to_int('FFFFFEBE')] # Neuron 1
-bg2_1 = hex_to_int('0001DE6D')
+wg2_1 = [hex_to_int('00000368'), hex_to_int('00000299')] # Neuron 1
+bg2_1 = hex_to_int('00021391')
 
-wg2_2 = [hex_to_int('00000073'), hex_to_int('FFFFFE3D')] # Neuron 2
-bg2_2 = hex_to_int('0001A99D')
+wg2_2 = [hex_to_int('0000202E'), hex_to_int('000003D2')] # Neuron 2
+bg2_2 = hex_to_int('FFFFCCDC')
 
-wg2_3 = [hex_to_int('FFFFF96E'), hex_to_int('FFFFFBC8')] # Neuron 3
-bg2_3 = hex_to_int('FFFE8C63')
+wg2_3 = [hex_to_int('FFFFDC57'), hex_to_int('FFFFEA04')] # Neuron 3
+bg2_3 = hex_to_int('00008C1C')
 
 # Generator Output (G3) - 9 Pixels
 # Format: [w1, w2, w3], bias
 g3_layer = [
-    ([hex_to_int('FFFF3C6B'), hex_to_int('FFFF41A0'), hex_to_int('0000B800')], hex_to_int('FFFF34F4')), # P1
-    ([hex_to_int('0001635B'), hex_to_int('0000F01E'), hex_to_int('FFFF7723')], hex_to_int('000231C0')), # P2
-    ([hex_to_int('FFFF7444'), hex_to_int('FFFF5910'), hex_to_int('0000C78A')], hex_to_int('FFFEF864')), # P3
-    ([hex_to_int('00017B45'), hex_to_int('000100AF'), hex_to_int('FFFF6405')], hex_to_int('0001F850')), # P4
-    ([hex_to_int('0000A9A8'), hex_to_int('0000E423'), hex_to_int('FFFF5977')], hex_to_int('0000D1C8')), # P5
-    ([hex_to_int('000180B3'), hex_to_int('0000EDA4'), hex_to_int('FFFF57AB')], hex_to_int('0001FBE8')), # P6
-    ([hex_to_int('FFFF56F9'), hex_to_int('FFFF29B9'), hex_to_int('0000C122')], hex_to_int('FFFF3A61')), # P7
-    ([hex_to_int('0001407F'), hex_to_int('0000F4FF'), hex_to_int('FFFF4C7E')], hex_to_int('000229CC')), # P8
-    ([hex_to_int('FFFF3474'), hex_to_int('FFFF5D78'), hex_to_int('00009BB0')], hex_to_int('FFFF0B52')), # P9
+    ([hex_to_int('FFFEC358'), hex_to_int('00000DA2'), hex_to_int('FFFFDAAA')], hex_to_int('FFFE2C0B')), # P1
+    ([hex_to_int('0001479A'), hex_to_int('FFFFEDA0'), hex_to_int('000043B0')], hex_to_int('0001B139')), # P2
+    ([hex_to_int('00017714'), hex_to_int('000013AD'), hex_to_int('000042BB')], hex_to_int('00019574')), # P3
+    ([hex_to_int('00016FA4'), hex_to_int('00000F95'), hex_to_int('00002B78')], hex_to_int('0001A2D2')), # P4
+    ([hex_to_int('FFFEAC8E'), hex_to_int('00003486'), hex_to_int('FFFFDA5C')], hex_to_int('FFFE4B6A')), # P5
+    ([hex_to_int('000174EB'), hex_to_int('FFFFFCC6'), hex_to_int('00001F6B')], hex_to_int('0001A085')), # P6
+    ([hex_to_int('000146E2'), hex_to_int('FFFFD31D'), hex_to_int('00003F63')], hex_to_int('0001B4AB')), # P7
+    ([hex_to_int('00013BF6'), hex_to_int('FFFFFD25'), hex_to_int('000017A0')], hex_to_int('0001D914')), # P8
+    ([hex_to_int('FFFED982'), hex_to_int('00003650'), hex_to_int('FFFFBD91')], hex_to_int('FFFE2D04')), # P9
 ]
 
 # ==========================================
