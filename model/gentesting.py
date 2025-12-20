@@ -10,6 +10,10 @@ def hex_to_int(hex_str):
         return val - 0x100000000
     return val
 
+def to_hex(val):
+    """Converts signed int back to 32-bit hex string for display."""
+    return f"{(val + 0x100000000) & 0xFFFFFFFF:08x}"
+
 def q_mult(a, b):
     """Simulates Verilog: (a * b) >>> 16"""
     return (a * b) >> 16
@@ -20,7 +24,6 @@ def q_add(a, b):
 def q_tanh(x):
     """Simulates Tanh LUT"""
     # Convert Q16.16 to float for tanh, then back
-    # In hardware, this is a LUT, but math.tanh is close enough for verification
     float_val = x / 65536.0
     res = math.tanh(float_val)
     # Saturate like hardware
@@ -29,7 +32,7 @@ def q_tanh(x):
     return int(res * 65536)
 
 # ==========================================
-# 2. YOUR EXTRACTED WEIGHTS (From previous chat)
+# 2. WEIGHTS (From previous chat)
 # ==========================================
 # Generator Hidden (G2)
 wg2_1 = [hex_to_int('00000368'), hex_to_int('00000299')] # Neuron 1
@@ -65,44 +68,53 @@ print("--- Python Fixed-Point Verification ---")
 noise_1 = hex_to_int('00008000') 
 noise_2 = hex_to_int('FFFFCCCD') 
 
-print(f"Input Noise: {noise_1/65536.0:.4f}, {noise_2/65536.0:.4f}")
+print(f"Input Noise 1: {noise_1/65536.0:.4f} (Hex: {to_hex(noise_1)})")
+print(f"Input Noise 2: {noise_2/65536.0:.4f} (Hex: {to_hex(noise_2)})")
 
 # --- Step A: Generator Hidden (G2) ---
+print("\n=== G2 Hidden Layer (Calculated) ===")
+
 # Neuron 1
 sum1 = q_add(q_add(q_mult(noise_1, wg2_1[0]), q_mult(noise_2, wg2_1[1])), bg2_1)
 g2_out1 = q_tanh(sum1)
+print(f"Neuron 1 | Sum: {to_hex(sum1)} ({sum1/65536.0:+.4f}) -> Out: {to_hex(g2_out1)} ({g2_out1/65536.0:+.4f})")
 
 # Neuron 2
 sum2 = q_add(q_add(q_mult(noise_1, wg2_2[0]), q_mult(noise_2, wg2_2[1])), bg2_2)
 g2_out2 = q_tanh(sum2)
+print(f"Neuron 2 | Sum: {to_hex(sum2)} ({sum2/65536.0:+.4f}) -> Out: {to_hex(g2_out2)} ({g2_out2/65536.0:+.4f})")
 
 # Neuron 3
 sum3 = q_add(q_add(q_mult(noise_1, wg2_3[0]), q_mult(noise_2, wg2_3[1])), bg2_3)
 g2_out3 = q_tanh(sum3)
-
-print("\nG2 Hidden Layer Outputs:")
-print(f"N1: {g2_out1/65536.0:.4f}")
-print(f"N2: {g2_out2/65536.0:.4f}")
-print(f"N3: {g2_out3/65536.0:.4f}")
+print(f"Neuron 3 | Sum: {to_hex(sum3)} ({sum3/65536.0:+.4f}) -> Out: {to_hex(g2_out3)} ({g2_out3/65536.0:+.4f})")
 
 # --- Step B: Generator Output (G3) ---
-print("\nGenerated Image (Expect Cross Pattern):")
+print("\n=== G3 Output Layer (Calculated) ===")
 pixels = []
+print(f"{'Px':<4} | {'Sum (Hex)':<10} {'Sum (Flt)':<10} | {'Out (Hex)':<10} {'Out (Flt)':<10}")
+print("-" * 60)
+
 for i, (weights, bias) in enumerate(g3_layer):
     # Sum = (g2_1 * w1) + (g2_2 * w2) + (g2_3 * w3) + bias
-    s = q_add(q_mult(g2_out1, weights[0]), q_mult(g2_out2, weights[1]))
+    s = q_mult(g2_out1, weights[0])
+    s = q_add(s, q_mult(g2_out2, weights[1]))
     s = q_add(s, q_mult(g2_out3, weights[2]))
     s = q_add(s, bias)
     
     pix = q_tanh(s)
     pixels.append(pix)
     
-    # Interpretation
+    print(f"P{i+1:<3} | {to_hex(s)} {s/65536.0:>9.4f}  | {to_hex(pix)} {pix/65536.0:>9.4f}")
+
+# Grid Visualization
+print("\n=== Resulting Grid ===")
+for i, pix in enumerate(pixels):
     val_float = pix / 65536.0
+    # Determine symbol based on black/white threshold
     char = "X" if val_float > 0.5 else ("." if val_float < -0.5 else "?")
     
-    # Print as grid
     if (i+1) % 3 == 0:
-        print(f"{val_float:+.2f} ({char})")
+        print(f"{val_float:+.2f} {char}")
     else:
-        print(f"{val_float:+.2f} ({char})", end="\t")
+        print(f"{val_float:+.2f} {char}", end="\t")
