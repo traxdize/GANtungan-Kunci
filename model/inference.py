@@ -7,7 +7,7 @@ import os
 TOTAL_BITS = 16
 FRACTIONAL_BITS = 8
 SCALING_FACTOR = 2**FRACTIONAL_BITS  # 2^8 = 256
-MAT_FILE_PATH = "trained_simple_gan.mat"
+MAT_FILE_PATH = "output/trained_simple_gan.mat"
 
 # 2. Helper Functions for Fixed-Point Arithmetic
 

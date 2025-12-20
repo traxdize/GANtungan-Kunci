@@ -1,0 +1,124 @@
+$date
+	Sat Dec 13 21:34:58 2025
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module tb_tanh_lut $end
+$var wire 16 ! a_out [15:0] $end
+$var reg 16 " z_in [15:0] $end
+$scope function q_to_float $end
+$var reg 16 # fixed_val [15:0] $end
+$upscope $end
+$scope module DUT $end
+$var wire 16 $ z_q1_7_8 [15:0] $end
+$var wire 10 % rom_address [9:0] $end
+$var wire 16 & a_tanh [15:0] $end
+$var parameter 32 ' ADDRESS_BITS $end
+$var parameter 32 ( DATA_WIDTH $end
+$var parameter 16 ) MAX_NEGATIVE_VAL $end
+$var parameter 16 * MAX_POSITIVE_VAL $end
+$var parameter 16 + NEG_CLAMP_THRESHOLD $end
+$var parameter 16 , POS_CLAMP_THRESHOLD $end
+$var parameter 42 - ROM_DEPTH $end
+$upscope $end
+$scope task test_case $end
+$var reg 16 . input_val [15:0] $end
+$var integer 32 / case_num [31:0] $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+b10000000000 -
+b11000000000 ,
+b1111101000000000 +
+b100000000 *
+b1111111100000000 )
+b10000 (
+b1010 '
+$end
+#0
+$dumpvars
+b1 /
+b0 .
+b1111111100000000 &
+b0 %
+b0 $
+bx #
+b0 "
+b1111111100000000 !
+$end
+#10000
+b100 %
+b10000000 "
+b10000000 $
+b10000000 .
+b10 /
+b1111111100000000 #
+#20000
+b100000000 !
+b100000000 &
+b1111111100 %
+b1111111110000000 "
+b1111111110000000 $
+b1111111110000000 .
+b11 /
+b1111111100000000 #
+#30000
+b1111111100000000 !
+b1111111100000000 &
+b100111 %
+b10011111111 "
+b10011111111 $
+b10011111111 .
+b100 /
+b100000000 #
+#40000
+b100000000 !
+b100000000 &
+b1111011000 %
+b1111101100000001 "
+b1111101100000001 $
+b1111101100000001 .
+b101 /
+b1111111100000000 #
+#50000
+b1010000 %
+b101000000000 "
+b101000000000 $
+b101000000000 .
+b110 /
+b100000000 #
+#60000
+b1110110000 %
+b1111111100000000 !
+b1111111100000000 &
+b1111011000000000 "
+b1111011000000000 $
+b1111011000000000 .
+b111 /
+b100000000 #
+#70000
+b1111111111 %
+b100000000 !
+b100000000 &
+b111111111111111 "
+b111111111111111 $
+b111111111111111 .
+b1000 /
+b1111111100000000 #
+#80000
+b0 %
+b1111111100000000 !
+b1111111100000000 &
+b1000000000000000 "
+b1000000000000000 $
+b1000000000000000 .
+b1001 /
+b100000000 #
+#90000
+b1111111100000000 #

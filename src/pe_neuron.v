@@ -10,6 +10,8 @@ module pe_neuron #(
 ) (
     input signed [IN*WIDTH-1:0] x,
     input signed [WIDTH-1:0] b,
+  // Activation select: 0 = tanh, 1 = sigmoid
+  input wire act_sel,
     output signed [WIDTH-1:0] y
 );
   localparam SUM_WIDTH = WIDTH + $clog2(IN) + 1;
@@ -34,8 +36,28 @@ module pe_neuron #(
     end
   end
 
-  // ReLu activation function
-  assign y = (sum > 0) ? sum[WIDTH-1:0] : 0;
+  // Activation: selectable between sigmoid and tanh LUTs
+  // Convert lower bits of sum to Q1.7.8 16-bit input for the LUTs
+  wire [15:0] z_q1_7_8 = sum[15:0];
+
+  wire [15:0] a_sigmoid;
+  wire [15:0] a_tanh;
+
+  sigmoid_lut sigmoid_inst (
+    .z_q1_7_8(z_q1_7_8),
+    .a_sigmoid(a_sigmoid)
+  );
+
+  tanh_lut tanh_inst (
+    .z_q1_7_8(z_q1_7_8),
+    .a_tanh(a_tanh)
+  );
+
+  // Select between tanh (act_sel=0) and sigmoid (act_sel=1)
+  wire [15:0] a_selected = (act_sel == 1'b0) ? a_tanh : a_sigmoid;
+
+  // Sign-extend the 16-bit LUT output to the module output width
+  assign y = {{(WIDTH-16){a_selected[15]}}, a_selected};
 
 
 endmodule
