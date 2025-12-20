@@ -1,5 +1,4 @@
 // File name    : pe_neuron.v
-// Author       : Vico A.C. Silalahi (13223067)
 // Description  : neuron processing element for IN number input, should be used multiple times in a single layer.
 //                Input is the output of all the previous nodes multiplied by the weight in w(i,j)
 //                i being the previous node and j being the current node
