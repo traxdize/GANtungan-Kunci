@@ -14,20 +14,17 @@ module gan3x3 #(
     output reg signed [DATA_WIDTH-1:0] disc_out,
     output reg done
 );
-
-// RAM
-// Generator
-
+    // RAM
     reg signed [DATA_WIDTH-1:0] internal_ram [0:15];
-
     reg [9:0] mem_addr;
-    wire signed [DATA_WIDTH-1:0] w1, w2, w3, w4, bias;
 
+    // Weights & PE signals
+    wire signed [DATA_WIDTH-1:0] w1, w2, w3, w4, bias;
     reg signed [DATA_WIDTH-1:0] pe_x1, pe_x2, pe_x3, pe_x4;
     reg signed [DATA_WIDTH-1:0] pe_partial_sum;
     wire signed [DATA_WIDTH-1:0] pe_result;
 
-    // Kontrol
+    // Control
     reg pe_accumulate;
     reg [1:0] pe_act_sel; // 0 -> tanh, 1 -> sigmoid
 
@@ -36,7 +33,6 @@ module gan3x3 #(
         .w1(w1), .w2(w2), .w3(w3), .w4(w4), .bias(bias)
     );
 
-    // Inisialisasi Neuron
     pe_neuron #(.DATA_WIDTH(DATA_WIDTH)) u_pe (
         .clk(clk),
         .rst(rst),
@@ -49,7 +45,7 @@ module gan3x3 #(
         .y_out(pe_result)
     );
 
-    // Definisi state
+    // States
     localparam S_IDLE = 3'd0;
     localparam S_GEN_HIDDEN = 3'd1;
     localparam S_GEN_OUTPUT = 3'd2;
@@ -58,8 +54,8 @@ module gan3x3 #(
     localparam S_DONE = 3'd5;
 
     reg [2:0] state;
-    reg [3:0] loop_cnt; // tunggu neuron
-    reg [1:0] acc_step; // untuk disc
+    reg [3:0] loop_cnt;
+    reg [1:0] acc_step;
 
     always @(posedge clk or negedge rst) begin
         if (!rst) begin
@@ -69,7 +65,6 @@ module gan3x3 #(
             loop_cnt <= 0;
             acc_step <= 0;
             pe_partial_sum <= 0;
-
             pe_x1 <= 0;
             pe_x2 <= 0;
             pe_x3 <= 0;
@@ -84,108 +79,154 @@ module gan3x3 #(
                         state <= S_GEN_HIDDEN;
                         mem_addr <= 0;
                         loop_cnt <= 0;
+                        
+                        // --- FIX 1: Pre-load inputs for first layer ---
+                        pe_x1 <= noise_in1;
+                        pe_x2 <= noise_in2;
+                        pe_x3 <= 0;
+                        pe_x4 <= 0;
+                        pe_act_sel <= 0; // Tanh
+                        pe_accumulate <= 0;
+                        // ----------------------------------------------
                     end
                 end
             
                 S_GEN_HIDDEN: begin
-                    pe_x1 <= noise_in1;
-                    pe_x2 <= noise_in2;
-                    pe_x3 <= 0;
-                    pe_x4 <= 0;
-                    pe_accumulate <= 0;
-                    pe_act_sel <= 2'd0; // tanh untuk layer hidden generator
-
+                    // Inputs are already valid from previous cycle (IDLE or Loop)
+                    
                     internal_ram[loop_cnt] <= pe_result;
 
                     if (loop_cnt == 2) begin
                         state <= S_GEN_OUTPUT;
                         loop_cnt <= 0;
                         mem_addr <= mem_addr+1;
+                        
+                        // --- FIX 2: Pre-load inputs for Generator Output Layer ---
+                        // Note: internal_ram[2] is being written NOW (pe_result), so we bypass
+                        pe_x1 <= internal_ram[0];
+                        pe_x2 <= internal_ram[1];
+                        pe_x3 <= pe_result; // Bypass: Use current result for x3
+                        pe_x4 <= 0;
+                        pe_act_sel <= 0; // Tanh
+                        // ---------------------------------------------------------
                     end else begin
                         loop_cnt <= loop_cnt+1;
                         mem_addr <= mem_addr+1;
+                        // Keep inputs stable (Noise) for next neuron
+                        pe_x1 <= noise_in1;
+                        pe_x2 <= noise_in2;
                     end
                 end
 
-                // Output Generator
                 S_GEN_OUTPUT: begin
-                    pe_x1 <= internal_ram[0];
-                    pe_x2 <= internal_ram[1];
-                    pe_x3 <= internal_ram[2];
-                    pe_x4 <= 0;
-                    pe_act_sel <= 2'd0; // masih tanh
-
+                    // Cycle 0: Inputs are valid (Pre-loaded from GEN_HIDDEN)
+                    // Cycle 1+: Inputs must be re-loaded from RAM
+                    
                     internal_ram[3+loop_cnt] <= pe_result;
-
+                    
                     if (loop_cnt == 8) begin
                         state <= S_DIS_HIDDEN;
                         loop_cnt <= 0;
                         acc_step <= 0;
                         mem_addr <= mem_addr+1;
+                        
+                        // --- FIX 3: Pre-load inputs for Discriminator Hidden ---
+                        // Note: internal_ram[11] is being written NOW (pe_result)
+                        // This corresponds to Pixel 9.
+                        // Discrim inputs: Pixels 1,2,3,4. These are already in RAM [3]..[6]
+                        pe_x1 <= internal_ram[3];
+                        pe_x2 <= internal_ram[4];
+                        pe_x3 <= internal_ram[5];
+                        pe_x4 <= internal_ram[6];
+                        pe_accumulate <= 0;
+                        // --------------------------------------------------------
                     end else begin
                         loop_cnt <= loop_cnt + 1;
                         mem_addr <= mem_addr + 1;
+                        
+                        // Sustain inputs for next pixel? 
+                        // Wait, for Generator Output, the inputs (Hidden Layer) 
+                        // are THE SAME for every pixel!
+                        // So we don't need to change pe_x here.
+                        // However, we must ensure we didn't clear them.
+                        // Re-assert them just in case:
+                        pe_x1 <= internal_ram[0];
+                        pe_x2 <= internal_ram[1];
+                        pe_x3 <= internal_ram[2];
                     end
                 end
 
                 S_DIS_HIDDEN: begin
+                    // Discriminator Hidden logic implies accumulation over 3 passes.
+                    // Passes use different input sets from RAM.
+                    
                     case (acc_step)
                         0: begin
-                            pe_x1 <= internal_ram[3];
-                            pe_x2 <= internal_ram[4];
-                            pe_x3 <= internal_ram[5];
-                            pe_x4 <= internal_ram[6];
-                            pe_accumulate <= 0;
-                            pe_act_sel <= 0;
-
+                            // Current inputs were pre-loaded in previous state (S_GEN_OUTPUT end)
+                            // Just save partial sum
                             pe_partial_sum <= pe_result;
+                            
+                            // Prep next inputs
                             acc_step <= 1;
-                            mem_addr <= mem_addr +1;
-                        end
-
-                        1: begin
+                            mem_addr <= mem_addr + 1;
+                            
                             pe_x1 <= internal_ram[7];
                             pe_x2 <= internal_ram[8];
                             pe_x3 <= internal_ram[9];
-                            pe_x4 <= internal_ram[10];
+                            pe_x4 <= internal_ram[10]; // Pixel 8
                             pe_accumulate <= 1;
-                            pe_act_sel <= 0;
+                        end
 
+                        1: begin
                             pe_partial_sum <= pe_result;
+                            
                             acc_step <= 2;
                             mem_addr <= mem_addr + 1;
-                        end
-                        
-                        2: begin
-                            pe_x1 <= internal_ram[11];
+                            
+                            pe_x1 <= internal_ram[11]; // Pixel 9
                             pe_x2 <= 0;
                             pe_x3 <= 0;
                             pe_x4 <= 0;
                             pe_accumulate <= 1;
-                            pe_act_sel <= 0;
-
+                        end
+                        
+                        2: begin
+                            // Final pass for this neuron
                             internal_ram[12+loop_cnt] <= pe_result;
                             
                             if(loop_cnt == 2) begin
                                 state <= S_DIS_OUTPUT;
                                 loop_cnt <= 0;
                                 mem_addr <= mem_addr + 1;
+                                
+                                // --- FIX 4: Pre-load inputs for Discrim Output ---
+                                // Discrim Output uses Discrim Hidden results (RAM 12, 13, 14)
+                                // RAM 14 is being written NOW (pe_result)
+                                pe_x1 <= internal_ram[12];
+                                pe_x2 <= internal_ram[13];
+                                pe_x3 <= pe_result; // Bypass
+                                pe_x4 <= 0;
+                                pe_act_sel <= 1; // Sigmoid
+                                pe_accumulate <= 0;
+                                // -------------------------------------------------
                             end else begin
                                 loop_cnt <= loop_cnt+1;
                                 acc_step <= 0;
                                 mem_addr <= mem_addr+1;
+                                
+                                // Prepare inputs for Next Neuron (Pass 0)
+                                pe_x1 <= internal_ram[3];
+                                pe_x2 <= internal_ram[4];
+                                pe_x3 <= internal_ram[5];
+                                pe_x4 <= internal_ram[6];
+                                pe_accumulate <= 0;
                             end
                         end
                     endcase
                 end
 
                 S_DIS_OUTPUT: begin
-                    pe_x1 <= internal_ram[12];
-                    pe_x2 <= internal_ram[13];
-                    pe_x3 <= internal_ram[14];
-                    pe_x4 <= 0;
-                    pe_act_sel <= 1; // sigmoid biar sigma
-
+                    // Inputs valid from pre-load
                     disc_out <= pe_result;
                     state <= S_DONE;
                 end
