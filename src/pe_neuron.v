@@ -1,3 +1,6 @@
+// File         : pe_neuron.v
+// Description  : Processing Element (Neuron) module
+
 `timescale 1ns/1ps
 `include "sigmoid_lut.v"
 `include "tanh_lut.v"
@@ -17,9 +20,7 @@ module pe_neuron #(
 
     output reg signed [DATA_WIDTH-1:0] y_out
 );
-    // 1. Multiply (64-BIT PRECISION)
-    // Inputs are Q16.16, weights are Q16.16
-    // Product is Q32.32 (64-bit)
+    // Multiply: Q16.16 inputs * Q16.16 weights -> Q32.32 products
     wire signed [2*DATA_WIDTH-1:0] p1_long = x1 * w1;
     wire signed [2*DATA_WIDTH-1:0] p2_long = x2 * w2;
     wire signed [2*DATA_WIDTH-1:0] p3_long = x3 * w3;
@@ -31,7 +32,7 @@ module pe_neuron #(
     wire signed [DATA_WIDTH-1:0] p3 = p3_long >>> 16;
     wire signed [DATA_WIDTH-1:0] p4 = p4_long >>> 16;
 
-    // 2. Summation (stays in Q16.16)
+    // Sum products and bias. If accumulating, add partial_sum_in.
     reg signed [DATA_WIDTH-1:0] sum_raw;
     always @(*) begin
         sum_raw = p1 + p2 + p3 + p4 + bias;
@@ -40,10 +41,7 @@ module pe_neuron #(
         end
     end
 
-    // 3. LUT Conversion
-    // Previous version down-converted to 16-bit here.
-    // NOW: We stay in Q16.16 (32-bit) entirely.
-    
+    // Convert summed Q16.16 value using LUTs (tanh and sigmoid)
     wire signed [31:0] tanh_out_32, sig_out_32;
 
     // Pass full 32-bit Q16.16 sum to the LUTs
@@ -57,7 +55,7 @@ module pe_neuron #(
         .a_sigmoid(sig_out_32)
     );
 
-    // 4. Output Selection
+    // Select activation output (0=tanh, 1=sigmoid, default=linear)
     always @(*) begin
         case (act_sel)
             2'd0: y_out = tanh_out_32; // Tanh

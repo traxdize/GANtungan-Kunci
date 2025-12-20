@@ -1,5 +1,5 @@
-// File: tanh_testbench.v
-// Description: Combines the robust tanh_lut module and its testbench for single-file simulation.
+// File         : tb_tanh_lut.v
+// Description  : Testbench for the tanh_lut module
 
 `timescale 1ns / 1ps
 

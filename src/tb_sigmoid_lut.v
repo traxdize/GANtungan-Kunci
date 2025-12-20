@@ -1,5 +1,5 @@
-// File: sigmoid_testbench.v
-// Description: Combines the robust sigmoid_lut module and its testbench for single-file simulation.
+// File         : tb_sigmoid_lut.v
+// Description  : Testbench for the sigmoid_lut module
 
 `timescale 1ns / 1ps
 
