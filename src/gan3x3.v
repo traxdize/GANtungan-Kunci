@@ -1,5 +1,8 @@
 `timescale 1ns/1ps
 
+`include "memory.v"
+`include "pe_neuron.v"
+
 module gan3x3 #(
     parameter DATA_WIDTH = 32
 ) (
@@ -34,7 +37,17 @@ module gan3x3 #(
     );
 
     // Inisialisasi Neuron
-    // blablabla
+    pe_neuron #(.DATA_WIDTH(DATA_WIDTH)) u_pe (
+        .clk(clk),
+        .rst(rst),
+        .x1(pe_x1), .x2(pe_x2), .x3(pe_x3), .x4(pe_x4),
+        .w1(w1), .w2(w2), .w3(w3), .w4(w4),
+        .bias(bias),
+        .pe_accumulate(pe_accumulate),
+        .partial_sum_in(pe_partial_sum),
+        .act_sel(pe_act_sel),
+        .y_out(pe_result)
+    );
 
     // Definisi state
     localparam S_IDLE = 3'd0;
@@ -56,6 +69,13 @@ module gan3x3 #(
             loop_cnt <= 0;
             acc_step <= 0;
             pe_partial_sum <= 0;
+
+            pe_x1 <= 0;
+            pe_x2 <= 0;
+            pe_x3 <= 0;
+            pe_x4 <= 0;
+            pe_accumulate <= 0;
+            pe_act_sel <= 0;
         end else begin
             case (state)
                 S_IDLE: begin
@@ -68,8 +88,8 @@ module gan3x3 #(
                 end
             
                 S_GEN_HIDDEN: begin
-                    pe_x1 <= noise_in_1;
-                    pe_x2 <= noise_in_2;
+                    pe_x1 <= noise_in1;
+                    pe_x2 <= noise_in2;
                     pe_x3 <= 0;
                     pe_x4 <= 0;
                     pe_accumulate <= 0;

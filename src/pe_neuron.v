@@ -1,63 +1,61 @@
-// File name    : pe_neuron.v
-// Author       : Vico A.C. Silalahi (13223067)
-// Description  : neuron processing element for IN number input, should be used multiple times in a single layer.
-//                Input is the output of all the previous nodes multiplied by the weight in w(i,j)
-//                i being the previous node and j being the current node
+`timescale 1ns/1ps
+`include "sigmoid_lut.v"
+`include "tanh_lut.v"
 
 module pe_neuron #(
-    parameter IN = 4,
-    parameter WIDTH = 32
+    parameter DATA_WIDTH = 32
 ) (
-    input signed [IN*WIDTH-1:0] x,
-    input signed [WIDTH-1:0] b,
-  // Activation select: 0 = tanh, 1 = sigmoid
-  input wire act_sel,
-    output signed [WIDTH-1:0] y
+    input wire clk, // Kept for compatibility, but unused for output logic
+    input wire rst,
+    input signed [DATA_WIDTH-1:0] x1, x2, x3, x4,
+    input signed [DATA_WIDTH-1:0] w1, w2, w3, w4,
+    input signed [DATA_WIDTH-1:0] bias,
+    
+    input wire pe_accumulate,
+    input wire signed [DATA_WIDTH-1:0] partial_sum_in,
+    input wire [1:0] act_sel,
+
+    output reg signed [DATA_WIDTH-1:0] y_out
 );
-  localparam SUM_WIDTH = WIDTH + $clog2(IN) + 1;
 
-  wire signed [WIDTH-1:0] x_un[IN-1:0];
-  reg signed  [SUM_WIDTH-1:0] sum;
-
-  // Unflatten input x to x_un
-  genvar i;
-  generate
-    for (i = 0; i < IN; i = i + 1) begin : unflatten_x
-      assign x_un[i] = x[(i+1)*WIDTH-1 : i*WIDTH];
+    // 1. Multiply
+    wire signed [DATA_WIDTH-1:0] p1 = (x1 * w1) >>> 16;
+    wire signed [DATA_WIDTH-1:0] p2 = (x2 * w2) >>> 16;
+    wire signed [DATA_WIDTH-1:0] p3 = (x3 * w3) >>> 16;
+    wire signed [DATA_WIDTH-1:0] p4 = (x4 * w4) >>> 16;
+    
+    // 2. Summation (Combinational)
+    reg signed [DATA_WIDTH-1:0] sum_raw;
+    always @(*) begin
+        // Calculate Base Sum
+        sum_raw = p1 + p2 + p3 + p4 + bias;
+        // Add Accumulation if enabled
+        if (pe_accumulate) begin
+            sum_raw = sum_raw + partial_sum_in;
+        end
     end
-  endgenerate
 
-  // Accumulate for each input that is already weighted and also the bias for this particular node
-  integer j;
-  always @(*) begin
-    sum = b;
-    for (j = 0; j < IN; j = j + 1) begin
-      sum = sum + x_un[j];
+    // 3. LUT Conversion
+    wire signed [31:0] sum_shifted = sum_raw >>> 8;
+    wire [15:0] lut_input;
+    assign lut_input = (sum_shifted > 32'sd32767)  ? 16'h7FFF :
+                       (sum_shifted < -32'sd32768) ? 16'h8000 :
+                                                     sum_shifted[15:0];
+
+    wire [15:0] tanh_out_16, sig_out_16;
+    tanh_lut u_tanh (.z_q1_7_8(lut_input), .a_tanh(tanh_out_16));
+    sigmoid_lut u_sig (.z_q1_7_8(lut_input), .a_sigmoid(sig_out_16));
+
+    wire signed [31:0] tanh_out_32 = $signed(tanh_out_16) <<< 8;
+    wire signed [31:0] sig_out_32  = $signed(sig_out_16)  <<< 8;
+
+    // 4. Output Logic (Combinational - REMOVED CLOCK)
+    always @(*) begin
+        case (act_sel)
+            2'd0: y_out = tanh_out_32; // Tanh
+            2'd1: y_out = sig_out_32;  // Sigmoid
+            default: y_out = sum_raw;  // Linear (Bypass)
+        endcase
     end
-  end
-
-  // Activation: selectable between sigmoid and tanh LUTs
-  // Convert lower bits of sum to Q1.7.8 16-bit input for the LUTs
-  wire [15:0] z_q1_7_8 = sum[15:0];
-
-  wire [15:0] a_sigmoid;
-  wire [15:0] a_tanh;
-
-  sigmoid_lut sigmoid_inst (
-    .z_q1_7_8(z_q1_7_8),
-    .a_sigmoid(a_sigmoid)
-  );
-
-  tanh_lut tanh_inst (
-    .z_q1_7_8(z_q1_7_8),
-    .a_tanh(a_tanh)
-  );
-
-  // Select between tanh (act_sel=0) and sigmoid (act_sel=1)
-  wire [15:0] a_selected = (act_sel == 1'b0) ? a_tanh : a_sigmoid;
-
-  // Sign-extend the 16-bit LUT output to the module output width
-  assign y = {{(WIDTH-16){a_selected[15]}}, a_selected};
-
 
 endmodule

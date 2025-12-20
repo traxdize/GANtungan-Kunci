@@ -1,4 +1,7 @@
 // Wrapper: MAC-PE with activation LUT selection (tanh or sigmoid)
+`include "sigmoid_lut.v"
+`include "tanh_lut.v"
+
 module mac_pe_act #(
   parameter DATA_WIDTH = 16,
   parameter ACC_WIDTH = 40,
