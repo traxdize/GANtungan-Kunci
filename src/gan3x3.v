@@ -127,7 +127,7 @@ module gan3x3 #(
                         pe_x2 <= internal_ram[4];
                         pe_x3 <= internal_ram[5];
                         pe_x4 <= internal_ram[6];
-                        pe_act_sel <= 0; // Tanh for discriminator
+                        pe_act_sel <= 2; // Tanh for discriminator
                         pe_accumulate <= 0;
                     end else begin
                         loop_cnt <= loop_cnt + 1;
@@ -142,22 +142,74 @@ module gan3x3 #(
                 end
 
                 S_DIS_HIDDEN: begin
-                    if (acc_step < 2) begin
-                        pe_partial_sum <= pe_result;
-                        acc_step <= acc_step + 1;
-                        mem_addr <= mem_addr + 1;
-                    end else begin
-                        internal_ram[12 + loop_cnt] <= pe_result;
-                        if (loop_cnt == 2) begin
-                            state <= S_DIS_OUTPUT;
-                            loop_cnt <= 0;
+                    // Discriminator Hidden logic implies accumulation over 3 passes.
+                    // Passes use different input sets from RAM.
+                    
+                    case (acc_step)
+                        0: begin
+                            // Current inputs were pre-loaded in previous state (S_GEN_OUTPUT end)
+                            // Just save partial sum
+                            pe_partial_sum <= pe_result;
+                            
+                            // Prep next inputs
+                            acc_step <= 1;
                             mem_addr <= mem_addr + 1;
-                        end else begin
-                            loop_cnt <= loop_cnt + 1;
-                            acc_step <= 0;
-                            mem_addr <= mem_addr + 1;
+                            
+                            pe_x1 <= internal_ram[7];
+                            pe_x2 <= internal_ram[8];
+                            pe_x3 <= internal_ram[9];
+                            pe_x4 <= internal_ram[10]; // Pixel 8
+                            pe_accumulate <= 1;
                         end
-                    end
+
+                        1: begin
+                            pe_partial_sum <= pe_result;
+                            
+                            acc_step <= 2;
+                            mem_addr <= mem_addr + 1;
+                            
+                            pe_x1 <= internal_ram[11]; // Pixel 9
+                            pe_x2 <= 0;
+                            pe_x3 <= 0;
+                            pe_x4 <= 0;
+                            pe_act_sel <= 0;
+                            pe_accumulate <= 1;
+                        end
+                        
+                        2: begin
+                            // Final pass for this neuron
+                            internal_ram[12+loop_cnt] <= pe_result;
+                            
+                            if(loop_cnt == 2) begin
+                                state <= S_DIS_OUTPUT;
+                                loop_cnt <= 0;
+                                mem_addr <= mem_addr + 1;
+                                
+                                // --- FIX 4: Pre-load inputs for Discrim Output ---
+                                // Discrim Output uses Discrim Hidden results (RAM 12, 13, 14)
+                                // RAM 14 is being written NOW (pe_result)
+                                pe_x1 <= internal_ram[12];
+                                pe_x2 <= internal_ram[13];
+                                pe_x3 <= pe_result; // Bypass
+                                pe_x4 <= 0;
+                                pe_act_sel <= 1; // Sigmoid
+                                pe_accumulate <= 0;
+                                // -------------------------------------------------
+                            end else begin
+                                loop_cnt <= loop_cnt+1;
+                                acc_step <= 0;
+                                mem_addr <= mem_addr+1;
+                                
+                                // Prepare inputs for Next Neuron (Pass 0)
+                                pe_x1 <= internal_ram[3];
+                                pe_x2 <= internal_ram[4];
+                                pe_x3 <= internal_ram[5];
+                                pe_x4 <= internal_ram[6];
+                                pe_act_sel <= 2;    
+                                pe_accumulate <= 0;
+                            end
+                        end
+                    endcase
                 end
 
                 S_DIS_OUTPUT: begin
