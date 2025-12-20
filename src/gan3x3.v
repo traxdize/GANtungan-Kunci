@@ -26,7 +26,7 @@ module gan3x3 #(
 
     // Kontrol
     reg pe_accumulate;
-    reg [1:0] pe_act_sel; // 0 -> Linear, 1 -> Tanh, 2 -> Sigmoid
+    reg [1:0] pe_act_sel; // 0 -> tanh, 1 -> sigmoid
 
     memory #(.DATA_WIDTH(DATA_WIDTH)) u_mem (
         .clk (clk), .addr(mem_addr),
@@ -73,7 +73,7 @@ module gan3x3 #(
                     pe_x3 <= 0;
                     pe_x4 <= 0;
                     pe_accumulate <= 0;
-                    pe_act_sel <= 2'd1; // tanh untuk layer hidden generator
+                    pe_act_sel <= 2'd0; // tanh untuk layer hidden generator
 
                     internal_ram[loop_cnt] <= pe_result;
 
@@ -93,7 +93,7 @@ module gan3x3 #(
                     pe_x2 <= internal_ram[1];
                     pe_x3 <= internal_ram[2];
                     pe_x4 <= 0;
-                    pe_act_sel <= 2'd1; // masih tanh
+                    pe_act_sel <= 2'd0; // masih tanh
 
                     internal_ram[3+loop_cnt] <= pe_result;
 
@@ -142,7 +142,7 @@ module gan3x3 #(
                             pe_x3 <= 0;
                             pe_x4 <= 0;
                             pe_accumulate <= 1;
-                            pe_act_sel <= 1;
+                            pe_act_sel <= 0;
 
                             internal_ram[12+loop_cnt] <= pe_result;
                             
@@ -164,7 +164,7 @@ module gan3x3 #(
                     pe_x2 <= internal_ram[13];
                     pe_x3 <= internal_ram[14];
                     pe_x4 <= 0;
-                    pe_act_sel <= 2; // sigmoid biar sigma
+                    pe_act_sel <= 1; // sigmoid biar sigma
 
                     disc_out <= pe_result;
                     state <= S_DONE;
