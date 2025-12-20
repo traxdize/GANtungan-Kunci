@@ -142,58 +142,22 @@ module gan3x3 #(
                 end
 
                 S_DIS_HIDDEN: begin
-                    case (acc_step)
-                        0: begin
-                            pe_partial_sum <= pe_result;
-                            acc_step <= 1;
+                    if (acc_step < 2) begin
+                        pe_partial_sum <= pe_result;
+                        acc_step <= acc_step + 1;
+                        mem_addr <= mem_addr + 1;
+                    end else begin
+                        internal_ram[12 + loop_cnt] <= pe_result;
+                        if (loop_cnt == 2) begin
+                            state <= S_DIS_OUTPUT;
+                            loop_cnt <= 0;
                             mem_addr <= mem_addr + 1;
-                            
-                            pe_x1 <= internal_ram[7];
-                            pe_x2 <= internal_ram[8];
-                            pe_x3 <= internal_ram[9];
-                            pe_x4 <= internal_ram[10];
-                            pe_accumulate <= 1;
-                        end
-
-                        1: begin
-                            pe_partial_sum <= pe_result;
-                            acc_step <= 2;
+                        end else begin
+                            loop_cnt <= loop_cnt + 1;
+                            acc_step <= 0;
                             mem_addr <= mem_addr + 1;
-                            
-                            pe_x1 <= internal_ram[11];
-                            pe_x2 <= 0;
-                            pe_x3 <= 0;
-                            pe_x4 <= 0;
-                            pe_accumulate <= 1;
                         end
-                        
-                        2: begin
-                            internal_ram[12+loop_cnt] <= pe_result;
-                            
-                            if(loop_cnt == 2) begin
-                                state <= S_DIS_OUTPUT;
-                                loop_cnt <= 0;
-                                mem_addr <= mem_addr + 1;
-                                
-                                pe_x1 <= internal_ram[12];
-                                pe_x2 <= internal_ram[13];
-                                pe_x3 <= pe_result;
-                                pe_x4 <= 0;
-                                pe_act_sel <= 1; // Sigmoid
-                                pe_accumulate <= 0;
-                            end else begin
-                                loop_cnt <= loop_cnt+1;
-                                acc_step <= 0;
-                                mem_addr <= mem_addr+1;
-                                
-                                pe_x1 <= internal_ram[3];
-                                pe_x2 <= internal_ram[4];
-                                pe_x3 <= internal_ram[5];
-                                pe_x4 <= internal_ram[6];
-                                pe_accumulate <= 0;
-                            end
-                        end
-                    endcase
+                    end
                 end
 
                 S_DIS_OUTPUT: begin
