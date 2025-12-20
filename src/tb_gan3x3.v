@@ -1,4 +1,6 @@
-// File: tb_gan3x3.v
+// File         : tb_gan3x3.v
+// Description  : Testbench for the gan3x3 module
+
 `timescale 1ns/1ps
 `include "gan3x3.v"
 

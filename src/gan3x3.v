@@ -1,3 +1,6 @@
+// File         : gan3x3.v
+// Description  : GAN 3x3 module
+
 `timescale 1ns/1ps
 
 `include "memory.v"
@@ -14,19 +17,19 @@ module gan3x3 #(
     output reg signed [DATA_WIDTH-1:0] disc_out,
     output reg done
 );
-    // RAM
+    // Internal RAM and address
     reg signed [DATA_WIDTH-1:0] internal_ram [0:15];
     reg [9:0] mem_addr;
 
-    // Weights & PE signals
+    // Weight outputs from memory and PE I/O
     wire signed [DATA_WIDTH-1:0] w1, w2, w3, w4, bias;
     reg signed [DATA_WIDTH-1:0] pe_x1, pe_x2, pe_x3, pe_x4;
     reg signed [DATA_WIDTH-1:0] pe_partial_sum;
     wire signed [DATA_WIDTH-1:0] pe_result;
 
-    // Control
+    // PE control: accumulation and activation select
     reg pe_accumulate;
-    reg [1:0] pe_act_sel; // 0 -> tanh, 1 -> sigmoid
+    reg [1:0] pe_act_sel; // 0=tanh, 1=sigmoid, 2=alternate tanh
 
     memory #(.DATA_WIDTH(DATA_WIDTH)) u_mem (
         .clk (clk), .addr(mem_addr),
@@ -45,7 +48,7 @@ module gan3x3 #(
         .y_out(pe_result)
     );
 
-    // States
+    // Control states
     localparam S_IDLE = 3'd0;
     localparam S_GEN_HIDDEN = 3'd1;
     localparam S_GEN_OUTPUT = 3'd2;
@@ -75,16 +78,17 @@ module gan3x3 #(
             case (state)
                 S_IDLE: begin
                     done <= 0;
-                    if(start) begin
+                    if (start) begin
                         state <= S_GEN_HIDDEN;
                         mem_addr <= 0;
                         loop_cnt <= 0;
-                        
+
+                        // Seed generator hidden inputs with noise
                         pe_x1 <= noise_in1;
                         pe_x2 <= noise_in2;
                         pe_x3 <= 0;
                         pe_x4 <= 0;
-                        pe_act_sel <= 0; // Tanh
+                        pe_act_sel <= 0; // tanh
                         pe_accumulate <= 0;
                     end
                 end
@@ -95,18 +99,18 @@ module gan3x3 #(
                     if (loop_cnt == 2) begin
                         state <= S_GEN_OUTPUT;
                         loop_cnt <= 0;
-                        mem_addr <= mem_addr+1;
-                        
-                        // Use freshly computed results
+                        mem_addr <= mem_addr + 1;
+
+                        // Prepare inputs for generator output stage
                         pe_x1 <= internal_ram[0];
                         pe_x2 <= internal_ram[1];
-                        pe_x3 <= pe_result; 
+                        pe_x3 <= pe_result;
                         pe_x4 <= 0;
                         pe_act_sel <= 0;
                         pe_accumulate <= 0;
                     end else begin
-                        loop_cnt <= loop_cnt+1;
-                        mem_addr <= mem_addr+1;
+                        loop_cnt <= loop_cnt + 1;
+                        mem_addr <= mem_addr + 1;
                         pe_x1 <= noise_in1;
                         pe_x2 <= noise_in2;
                         pe_x3 <= 0;
@@ -115,25 +119,26 @@ module gan3x3 #(
                 end
 
                 S_GEN_OUTPUT: begin
-                    internal_ram[3+loop_cnt] <= pe_result;
-                    
+                    internal_ram[3 + loop_cnt] <= pe_result;
+
                     if (loop_cnt == 8) begin
                         state <= S_DIS_HIDDEN;
                         loop_cnt <= 0;
                         acc_step <= 0;
-                        mem_addr <= mem_addr+1;
-                        
+                        mem_addr <= mem_addr + 1;
+
+                        // Load discriminator hidden inputs
                         pe_x1 <= internal_ram[3];
                         pe_x2 <= internal_ram[4];
                         pe_x3 <= internal_ram[5];
                         pe_x4 <= internal_ram[6];
-                        pe_act_sel <= 2; // Tanh for discriminator
+                        pe_act_sel <= 2; // tanh variant
                         pe_accumulate <= 0;
                     end else begin
                         loop_cnt <= loop_cnt + 1;
                         mem_addr <= mem_addr + 1;
-                        
-                        // Keep same inputs (hidden layer outputs)
+
+                        // Use generator hidden outputs as inputs
                         pe_x1 <= internal_ram[0];
                         pe_x2 <= internal_ram[1];
                         pe_x3 <= internal_ram[2];
@@ -142,33 +147,26 @@ module gan3x3 #(
                 end
 
                 S_DIS_HIDDEN: begin
-                    // Discriminator Hidden logic implies accumulation over 3 passes.
-                    // Passes use different input sets from RAM.
-                    
+                    // Discriminator hidden: accumulate over three passes
                     case (acc_step)
                         0: begin
-                            // Current inputs were pre-loaded in previous state (S_GEN_OUTPUT end)
-                            // Just save partial sum
+                            // Save partial sum and set inputs for pass 2
                             pe_partial_sum <= pe_result;
-                            
-                            // Prep next inputs
                             acc_step <= 1;
                             mem_addr <= mem_addr + 1;
-                            
                             pe_x1 <= internal_ram[7];
                             pe_x2 <= internal_ram[8];
                             pe_x3 <= internal_ram[9];
-                            pe_x4 <= internal_ram[10]; // Pixel 8
+                            pe_x4 <= internal_ram[10];
                             pe_accumulate <= 1;
                         end
 
                         1: begin
+                            // Save partial sum and load remaining inputs
                             pe_partial_sum <= pe_result;
-                            
                             acc_step <= 2;
                             mem_addr <= mem_addr + 1;
-                            
-                            pe_x1 <= internal_ram[11]; // Pixel 9
+                            pe_x1 <= internal_ram[11];
                             pe_x2 <= 0;
                             pe_x3 <= 0;
                             pe_x4 <= 0;
@@ -177,35 +175,32 @@ module gan3x3 #(
                         end
                         
                         2: begin
-                            // Final pass for this neuron
-                            internal_ram[12+loop_cnt] <= pe_result;
-                            
-                            if(loop_cnt == 2) begin
+                            // Final pass: write result to RAM
+                            internal_ram[12 + loop_cnt] <= pe_result;
+
+                            if (loop_cnt == 2) begin
+                                // Move to discriminator output stage
                                 state <= S_DIS_OUTPUT;
                                 loop_cnt <= 0;
                                 mem_addr <= mem_addr + 1;
-                                
-                                // --- FIX 4: Pre-load inputs for Discrim Output ---
-                                // Discrim Output uses Discrim Hidden results (RAM 12, 13, 14)
-                                // RAM 14 is being written NOW (pe_result)
+
+                                // Load D3 inputs
                                 pe_x1 <= internal_ram[12];
                                 pe_x2 <= internal_ram[13];
-                                pe_x3 <= pe_result; // Bypass
+                                pe_x3 <= pe_result;
                                 pe_x4 <= 0;
-                                pe_act_sel <= 1; // Sigmoid
+                                pe_act_sel <= 1; // sigmoid
                                 pe_accumulate <= 0;
-                                // -------------------------------------------------
                             end else begin
-                                loop_cnt <= loop_cnt+1;
+                                // Prepare next hidden neuron
+                                loop_cnt <= loop_cnt + 1;
                                 acc_step <= 0;
-                                mem_addr <= mem_addr+1;
-                                
-                                // Prepare inputs for Next Neuron (Pass 0)
+                                mem_addr <= mem_addr + 1;
                                 pe_x1 <= internal_ram[3];
                                 pe_x2 <= internal_ram[4];
                                 pe_x3 <= internal_ram[5];
                                 pe_x4 <= internal_ram[6];
-                                pe_act_sel <= 2;    
+                                pe_act_sel <= 2;
                                 pe_accumulate <= 0;
                             end
                         end
