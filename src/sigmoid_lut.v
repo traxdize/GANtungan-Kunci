@@ -29,7 +29,7 @@ module sigmoid_lut (
     wire signed [31:0] z_abs = is_negative ? -z_in : z_in;
 
     // Address bits selected from fractional range (resolution ~0.125)
-    wire [ADDRESS_BITS-1:0] rom_address = z_abs[22:13];
+    wire [ADDRESS_BITS-1:0] rom_address = z_abs[15:6];
     wire signed [31:0] rom_data = SIGMOID_ROM[rom_address];
 
     assign a_sigmoid =

@@ -28,7 +28,7 @@ module tanh_lut (
     wire signed [31:0] z_abs = z_in[31] ? -z_in : z_in;
 
     // Address bits taken from fractional region (resolution ~0.125)
-    wire [ADDRESS_BITS-1:0] rom_address = z_abs[18:9];
+    wire [ADDRESS_BITS-1:0] rom_address = z_abs[15:6];
     wire signed [31:0] rom_data = TANH_ROM[rom_address];
 
     // Output with clamping and symmetry
