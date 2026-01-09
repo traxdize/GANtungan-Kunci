@@ -194,3 +194,4 @@ for i, w in enumerate(d3_weights):
 final_prob = q_sigmoid(d3_acc)
 
 print(f"\n[D3] Probability: {final_prob/65536.0:.4f} (Hex: {hex(final_prob)})")
+input("\nPress Enter to exit...")
