@@ -1,12 +1,6 @@
 // File         : pe_neuron.v
 // Description  : Processing Element (Neuron) module
-
-
-// Clock/Edge analysis krn ternyata salah pipe_wait
-// sum_reg is on clock edge
-// sig_out and tanh_out is combinational
-// y_out and y_final_reg is clocked
-// So for a single pass, it needs 1 clock (on any edge)
+// Fixed point   : Q8.24 (32-bit signed: 8 integer bits, 24 fractional bits)
 
 
 `include "tanh_lut.v"
@@ -39,17 +33,17 @@ module pe_neuron #(
         if (!rst) begin
             p1_reg <= 0; p2_reg <= 0; p3_reg <= 0; p4_reg <= 0;
         end else begin
-            // Shift down to Q16.16 immediately and register
-            p1_reg <= p1_long >>> 16;
-            p2_reg <= p2_long >>> 16;
-            p3_reg <= p3_long >>> 16;
-            p4_reg <= p4_long >>> 16;
+            // Shift down to Q8.24 and register (fractional bits = 24)
+            p1_reg <= p1_long >>> 24;
+            p2_reg <= p2_long >>> 24;
+            p3_reg <= p3_long >>> 24;
+            p4_reg <= p4_long >>> 24;
         end
     end
 
     // Summation (Clocked)
     reg signed [DATA_WIDTH-1:0] sum_reg;
-    reg [1:0] act_sel_d1, act_sel_d2; // Delay activation select signal to match pipeline
+    reg [1:0] act_sel_d1; // Delay activation select signal to match pipeline
     
     always @(posedge clk or negedge rst) begin
         if (!rst) begin

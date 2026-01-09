@@ -2,12 +2,12 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-def hex_to_float_q16_16(hex_str):
-    """Converts a Q16.16 hex string (two's complement) back to a float."""
+def hex_to_float_q8_24(hex_str):
+    """Converts a Q8.24 hex string (two's complement) back to a float."""
     val = int(hex_str, 16)
     if val & 0x80000000:
         val -= 0x100000000
-    return val / 65536.0
+    return val / (2**24)
 
 def get_lut_value(lut, x, step_size, is_sigmoid=True):
     """Simulates hardware symmetry logic to retrieve values for negative x."""
@@ -34,7 +34,7 @@ def plot_lut_comparison(filename, func, title, step_size, is_sigmoid):
     lut = []
     try:
         with open(filename, "r") as f:
-            lut = [hex_to_float_q16_16(line.strip()) for line in f if line.strip()]
+            lut = [hex_to_float_q8_24(line.strip()) for line in f if line.strip()]
     except FileNotFoundError:
         print(f"Error: {filename} not found.")
         return

@@ -57,21 +57,21 @@ module gan3x3 #(
     // assign ram_out_14 = internal_ram[14];
     // assign ram_out_15 = internal_ram[15];
     
-    // --- Weights & PE signals ---
+    // Weights & PE signals
     wire signed [DATA_WIDTH-1:0] w1, w2, w3, w4, bias;
     reg signed [DATA_WIDTH-1:0] pe_x1, pe_x2, pe_x3, pe_x4;
     reg signed [DATA_WIDTH-1:0] pe_partial_sum;
     wire signed [DATA_WIDTH-1:0] pe_result;
     
-    // --- Control ---
+    // Control
     reg pe_accumulate;
     reg [1:0] pe_act_sel; // 0 -> tanh, 1 -> sigmoid
 
-    // --- Pipeline Control ---
+    // Pipeline Control
     reg [1:0] pipe_cnt;
     localparam [1:0] PIPE_WAIT = 2'd3; // Kontrol pipeline
 
-    // --- Instantiations ---
+    // Instantiations
     memory #(.DATA_WIDTH(DATA_WIDTH)) u_mem (
         .clk (clk), .addr(mem_addr),
         .w1(w1), .w2(w2), .w3(w3), .w4(w4), .bias(bias)

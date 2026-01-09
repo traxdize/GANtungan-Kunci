@@ -8,19 +8,19 @@ module memory #(
     parameter ADDR_WIDTH = 10,
     parameter MEM_DEPTH  = 32
 )(
-    input wire clk, 
+    input wire clk,
     input wire [ADDR_WIDTH-1:0] addr,
     output reg signed [DATA_WIDTH-1:0] w1, w2, w3, w4, bias
 );
 
-    // Internal memory arrays
+    // Internal RAM
     reg [DATA_WIDTH-1:0] mem_w1   [0:MEM_DEPTH-1];
     reg [DATA_WIDTH-1:0] mem_w2   [0:MEM_DEPTH-1];
     reg [DATA_WIDTH-1:0] mem_w3   [0:MEM_DEPTH-1];
     reg [DATA_WIDTH-1:0] mem_w4   [0:MEM_DEPTH-1];
     reg [DATA_WIDTH-1:0] mem_bias [0:MEM_DEPTH-1];
 
-    // Initialize memory from hex files
+    // Load contents from hex files
     initial begin
         $readmemh("mem/w1.hex",   mem_w1);
         $readmemh("mem/w2.hex",   mem_w2);
@@ -29,7 +29,7 @@ module memory #(
         $readmemh("mem/bias.hex", mem_bias);
     end
 
-    // Combinational read logic
+    // Combinational read
     always @(*) begin
         if (addr < MEM_DEPTH) begin
             w1   = mem_w1[addr];

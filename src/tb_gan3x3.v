@@ -28,8 +28,19 @@ module tb_gan3x3;
         .done(done)
     );
 
-    // Clock Generation
+    // Clock
     always #5 clk = ~clk;
+    
+    // Helper: Q8.24 to real
+    function real q8_24_to_real;
+        input signed [31:0] val;
+        begin
+            q8_24_to_real = $signed(val) / 16777216.0; // 2^24
+        end
+    endfunction
+
+    integer i, r, c, idx;
+
 
     // Waveform Dump
     initial begin
@@ -44,21 +55,16 @@ module tb_gan3x3;
         noise_in1 = 0;
         noise_in2 = 0;
 
-        $display("--- Simulation Start ---");
+        $display("Simulation start");
 
-        // Reset Sequence
-        #20;
-        @(negedge clk);
-        rst = 1; // Release Reset
-        
-        // --------------------------------------------------------
-        // Test Case 1: Noise [0.5, -0.2]
-        // --------------------------------------------------------
-        #20;
-        @(negedge clk);
-        $display("\n--- Test Case 1: Noise [0.5, -0.2] ---");
-        noise_in1 = 32'h0000_8000;  // 0.5
-        noise_in2 = 32'hFFFF_CCCD;  // -0.2
+        // Reset
+        #20; @(negedge clk); rst = 1;
+
+        // Test case: noise [0.5, -0.2]
+        #20; @(negedge clk);
+        $display("Test case: noise [0.5, -0.2]");
+        noise_in1 = 32'h0080_0000;  // 0.5  -> 0.5 * 2^24 = 0x00800000
+        noise_in2 = 32'hFFCC_CCCD;  // -0.2 -> -0.2 * 2^24 = 0xFFCCCCCD
         start = 1;
         
         #10;
@@ -68,42 +74,56 @@ module tb_gan3x3;
         wait(done);
         @(negedge clk);
 
-        // --- Print Results for Test Case 1 ---
-        $display("Done Signal Received!");
-        
-        // 1. Generator Hidden Layer (G2) - stored in RAM [0..2]
-        $display("\n[G2] Generator Hidden Layer Outputs:");
-        $display("N1: %h", u_dut.internal_ram[0]);
-        $display("N2: %h", u_dut.internal_ram[1]);
-        $display("N3: %h", u_dut.internal_ram[2]);
+        $display("");
+        $display("RESULTS (Q8.24)");
+        $display("");
 
-        // 2. Generator Output Layer (G3) - stored in RAM [3..11]
-        $display("\n[G3] Generated Fake Image (3x3):");
-        $display("[ %h  %h  %h ]", u_dut.internal_ram[3], u_dut.internal_ram[4], u_dut.internal_ram[5]);
-        $display("[ %h  %h  %h ]", u_dut.internal_ram[6], u_dut.internal_ram[7], u_dut.internal_ram[8]);
-        $display("[ %h  %h  %h ]", u_dut.internal_ram[9], u_dut.internal_ram[10], u_dut.internal_ram[11]);
+        // G2: generator hidden (RAM 0..2)
+        $display("G2:");
+        for (i = 0; i < 3; i = i + 1) begin
+            $display("N%0d: %h (%0.6f)", i+1, u_dut.internal_ram[i], q8_24_to_real(u_dut.internal_ram[i]));
+        end
 
-        // 3. Discriminator Hidden Layer (D2) - stored in RAM [12..14]
-        $display("\n[D2] Discriminator Hidden Layer Outputs:");
-        $display("N1: %h", u_dut.internal_ram[12]);
-        $display("N2: %h", u_dut.internal_ram[13]);
-        $display("N3: %h", u_dut.internal_ram[14]);
+        // G3: generated image (float)
+        $display("");
+        $display("G3: image (float)");
+        $display("");
+        for (r = 0; r < 3; r = r + 1) begin
+            idx = 3 + r*3;
+            $display("%0.6f %0.6f %0.6f",
+                q8_24_to_real(u_dut.internal_ram[idx]),
+                q8_24_to_real(u_dut.internal_ram[idx+1]),
+                q8_24_to_real(u_dut.internal_ram[idx+2])
+            );
+        end
+        $display("");
+        $display("G3: image (hex)");
+        $display("");
+        for (r = 0; r < 3; r = r + 1) begin
+            idx = 3 + r*3;
+            $display("%h %h %h",
+                u_dut.internal_ram[idx], u_dut.internal_ram[idx+1], u_dut.internal_ram[idx+2]
+            );
+        end
+        // D2: discriminator hidden (RAM 12..14)
+        $display("");
+        $display("D2: hidden");
+        $display("");
+        for (i = 0; i < 3; i = i + 1) begin
+            $display("N%0d: %h (%0.6f)", i+1, u_dut.internal_ram[12 + i], q8_24_to_real(u_dut.internal_ram[12 + i]));
+        end
 
-        // 4. Final Output
-        float_out = $signed(disc_out) / 65536.0;
-        $display("\n[D3] Discriminator Final Output:");
-        $display("Raw Hex: %h", disc_out);
-        $display("Probability: %0.4f", float_out);
+        // D3: final output
+        float_out = q8_24_to_real(disc_out);
+        $display("");
+        $display("D3: final");
+        $display("");
+        $display("Raw: %h", disc_out);
+        $display("Prob: %0.6f", float_out);
 
         #100;
         $display("\n--- Simulation Complete ---");
         $finish;
-    end
-
-    // Dump Waveforms
-    initial begin
-        $dumpfile("gan_waveform.vcd");
-        $dumpvars(0, tb_gan3x3);
     end
 
 endmodule
