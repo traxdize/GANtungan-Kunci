@@ -23,9 +23,9 @@ DGL = 2;                 % DとGの学習比D/G = 2 -> D:G = 2:1
 
 % ======== Train data, 学習データ ========
 % Diagonal Line
-diag_line = [ -1 1 -1; ...
+diag_line = [ 1 -1 1; ...
              1  -1 1; ...
-             -1 1  -1]';
+             1 -1  1]';
 
 % Vertical Bar
 
