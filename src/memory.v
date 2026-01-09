@@ -6,7 +6,7 @@
 module memory #(
     parameter DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 10,
-    parameter MEM_DEPTH  = 32  // Adjusted to cover all necessary addresses
+    parameter MEM_DEPTH  = 32
 )(
     input wire clk, 
     input wire [ADDR_WIDTH-1:0] addr,

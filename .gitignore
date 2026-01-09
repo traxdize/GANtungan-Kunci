@@ -213,9 +213,5 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/matlab,python
 src/a.out
 src/gan_waveform.vcd
-src/a.out
-src/a.out
-src/a.out
-src/gan_waveform.vcd
-src/a.out
-src/gan_waveform.vcd
+
+src/*.out

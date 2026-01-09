@@ -15,45 +15,47 @@ module gan3x3 #(
     input wire signed [DATA_WIDTH-1:0] noise_in1,
     input wire signed [DATA_WIDTH-1:0] noise_in2,
     output reg signed [DATA_WIDTH-1:0] disc_out,
-    output reg done,
+    output reg done
 
-    output wire [DATA_WIDTH-1:0] ram_out_0,
-    output wire [DATA_WIDTH-1:0] ram_out_1,
-    output wire [DATA_WIDTH-1:0] ram_out_2,
-    output wire [DATA_WIDTH-1:0] ram_out_3,
-    output wire [DATA_WIDTH-1:0] ram_out_4,
-    output wire [DATA_WIDTH-1:0] ram_out_5,
-    output wire [DATA_WIDTH-1:0] ram_out_6,
-    output wire [DATA_WIDTH-1:0] ram_out_7,
-    output wire [DATA_WIDTH-1:0] ram_out_8,
-    output wire [DATA_WIDTH-1:0] ram_out_9,
-    output wire [DATA_WIDTH-1:0] ram_out_10,
-    output wire [DATA_WIDTH-1:0] ram_out_11,
-    output wire [DATA_WIDTH-1:0] ram_out_12,
-    output wire [DATA_WIDTH-1:0] ram_out_13,
-    output wire [DATA_WIDTH-1:0] ram_out_14,
-    output wire [DATA_WIDTH-1:0] ram_out_15
+    // Internal ram debug temporary signals
+    // output wire [DATA_WIDTH-1:0] ram_out_0,
+    // output wire [DATA_WIDTH-1:0] ram_out_1,
+    // output wire [DATA_WIDTH-1:0] ram_out_2,
+    // output wire [DATA_WIDTH-1:0] ram_out_3,
+    // output wire [DATA_WIDTH-1:0] ram_out_4,
+    // output wire [DATA_WIDTH-1:0] ram_out_5,
+    // output wire [DATA_WIDTH-1:0] ram_out_6,
+    // output wire [DATA_WIDTH-1:0] ram_out_7,
+    // output wire [DATA_WIDTH-1:0] ram_out_8,
+    // output wire [DATA_WIDTH-1:0] ram_out_9,
+    // output wire [DATA_WIDTH-1:0] ram_out_10,
+    // output wire [DATA_WIDTH-1:0] ram_out_11,
+    // output wire [DATA_WIDTH-1:0] ram_out_12,
+    // output wire [DATA_WIDTH-1:0] ram_out_13,
+    // output wire [DATA_WIDTH-1:0] ram_out_14,
+    // output wire [DATA_WIDTH-1:0] ram_out_15
 );
     // --- RAM ---
     reg signed [DATA_WIDTH-1:0] internal_ram [0:15];
     reg [9:0] mem_addr;
 
-    assign ram_out_0 = internal_ram[0];
-    assign ram_out_1 = internal_ram[1];
-    assign ram_out_2 = internal_ram[2];
-    assign ram_out_3 = internal_ram[3];
-    assign ram_out_4 = internal_ram[4];
-    assign ram_out_5 = internal_ram[5];
-    assign ram_out_6 = internal_ram[6];
-    assign ram_out_7 = internal_ram[7];
-    assign ram_out_8 = internal_ram[8];
-    assign ram_out_9 = internal_ram[9];
-    assign ram_out_10 = internal_ram[10];
-    assign ram_out_11 = internal_ram[11];
-    assign ram_out_12 = internal_ram[12];
-    assign ram_out_13 = internal_ram[13];
-    assign ram_out_14 = internal_ram[14];
-    assign ram_out_15 = internal_ram[15];
+    // Internal ram debug temporary signals
+    // assign ram_out_0 = internal_ram[0];
+    // assign ram_out_1 = internal_ram[1];
+    // assign ram_out_2 = internal_ram[2];
+    // assign ram_out_3 = internal_ram[3];
+    // assign ram_out_4 = internal_ram[4];
+    // assign ram_out_5 = internal_ram[5];
+    // assign ram_out_6 = internal_ram[6];
+    // assign ram_out_7 = internal_ram[7];
+    // assign ram_out_8 = internal_ram[8];
+    // assign ram_out_9 = internal_ram[9];
+    // assign ram_out_10 = internal_ram[10];
+    // assign ram_out_11 = internal_ram[11];
+    // assign ram_out_12 = internal_ram[12];
+    // assign ram_out_13 = internal_ram[13];
+    // assign ram_out_14 = internal_ram[14];
+    // assign ram_out_15 = internal_ram[15];
     
     // --- Weights & PE signals ---
     wire signed [DATA_WIDTH-1:0] w1, w2, w3, w4, bias;

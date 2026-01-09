@@ -95,48 +95,6 @@ module tb_gan3x3;
         $display("Raw Hex: %h", disc_out);
         $display("Probability: %0.4f", float_out);
 
-        // // --------------------------------------------------------
-        // // Test Case 2: Noise [-1.0, 1.0]
-        // // --------------------------------------------------------
-        // #50;
-        // @(negedge clk); 
-        // $display("\n--- Test Case 2: Noise [-1.0, 1.0] ---");
-        // noise_in1 = 32'h0000_8000; // -1.0
-        // noise_in2 = 32'hFFFF_CCCD; //  1.0
-        // start = 1;
-        
-        // @(negedge clk);
-        // start = 0;
-        
-        // wait(done);
-        // @(negedge clk);
-        
-        // // --- Print Results for Test Case 2 ---
-        
-        // // 1. Generator Hidden Layer (G2)
-        // $display("\n[G2] Generator Hidden Layer Outputs:");
-        // $display("N1: %h", u_dut.internal_ram[0]);
-        // $display("N2: %h", u_dut.internal_ram[1]);
-        // $display("N3: %h", u_dut.internal_ram[2]);
-        
-        // // 2. Generator Output Layer (G3)
-        // $display("\n[G3] Generated Fake Image (3x3):");
-        // $display("[ %h  %h  %h ]", u_dut.internal_ram[3], u_dut.internal_ram[4], u_dut.internal_ram[5]);
-        // $display("[ %h  %h  %h ]", u_dut.internal_ram[6], u_dut.internal_ram[7], u_dut.internal_ram[8]);
-        // $display("[ %h  %h  %h ]", u_dut.internal_ram[9], u_dut.internal_ram[10], u_dut.internal_ram[11]);
-
-        // // 3. Discriminator Hidden Layer (D2)
-        // $display("\n[D2] Discriminator Hidden Layer Outputs:");
-        // $display("N1: %h", u_dut.internal_ram[12]);
-        // $display("N2: %h", u_dut.internal_ram[13]);
-        // $display("N3: %h", u_dut.internal_ram[14]);
-
-        // // 4. Final Output
-        // float_out = $signed(disc_out) / 65536.0;
-        // $display("\n[D3] Discriminator Final Output:");
-        // $display("Raw Hex: %h", disc_out);
-        // $display("Probability: %0.4f", float_out);
-
         #100;
         $display("\n--- Simulation Complete ---");
         $finish;
