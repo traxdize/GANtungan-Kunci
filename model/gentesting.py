@@ -1,108 +1,196 @@
 import math
+import matplotlib.pyplot as plt
+import numpy as np
+import os
 
 # ==========================================
 # 1. FIXED POINT MATH HELPERS (Q16.16)
 # ==========================================
 def hex_to_int(hex_str):
     """Converts 32-bit hex string (e.g., 'FFFFFA3B') to signed integer."""
-    val = int(hex_str, 16)
-    if val & 0x80000000: # If sign bit is set
+    if not isinstance(hex_str, str) or not hex_str.strip(): return 0
+    val = int(hex_str.strip(), 16)
+    if val & 0x80000000: 
         return val - 0x100000000
     return val
 
 def q_mult(a, b):
-    """Simulates Verilog: (a * b) >>> 16"""
     return (a * b) >> 16
 
 def q_add(a, b):
     return a + b
 
 def q_tanh(x):
-    """Simulates Tanh LUT"""
-    # Convert Q16.16 to float for tanh, then back
-    # In hardware, this is a LUT, but math.tanh is close enough for verification
     float_val = x / 65536.0
     res = math.tanh(float_val)
-    # Saturate like hardware
     if res >= 1.0: return 65536
     if res <= -1.0: return -65536
     return int(res * 65536)
 
+def q_sigmoid(x):
+    float_val = x / 65536.0
+    try:
+        res = 1 / (1 + math.exp(-float_val))
+    except OverflowError:
+        res = 0 if float_val < 0 else 1
+    
+    if res >= 1.0: return 65536
+    if res <= 0.0: return 0
+    return int(res * 65536)
+
 # ==========================================
-# 2. YOUR EXTRACTED WEIGHTS (From previous chat)
+# 2. GLOBAL WEIGHT LOADER
 # ==========================================
-# Generator Hidden (G2)
-wg2_1 = [hex_to_int('FFFFFA3B'), hex_to_int('FFFFFEBE')] # Neuron 1
-bg2_1 = hex_to_int('0001DE6D')
+def load_all_weights():
+    print("--- Loading Weights from Single Hex Files ---")
+    
+    # Files to read
+    files = ['w1.hex', 'w2.hex', 'w3.hex', 'w4.hex', 'bias.hex']
+    data = {}
+    
+    # FIX: Get the absolute path to the folder containing this script
+    try:
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+    except NameError:
+        # Fallback for Jupyter/Interactive environments
+        script_dir = os.getcwd()
 
-wg2_2 = [hex_to_int('00000073'), hex_to_int('FFFFFE3D')] # Neuron 2
-bg2_2 = hex_to_int('0001A99D')
+    for fname in files:
+        # Construct the full path
+        path = os.path.join(script_dir, fname)
+        
+        if os.path.exists(path):
+            print(f"  [OK] Found {fname}")
+            with open(path, 'r') as f:
+                data[fname] = [line.strip() for line in f if line.strip()]
+        else:
+            print(f"  [WARN] {fname} not found at {path}! Filling with zeros.")
+            data[fname] = []
 
-wg2_3 = [hex_to_int('FFFFF96E'), hex_to_int('FFFFFBC8')] # Neuron 3
-bg2_3 = hex_to_int('FFFE8C63')
+    # Helper to safely get a value at a specific index (row)
+    def get_val(fname, index):
+        if index < len(data[fname]):
+            return hex_to_int(data[fname][index])
+        return 0
 
-# Generator Output (G3) - 9 Pixels
-# Format: [w1, w2, w3], bias
-g3_layer = [
-    ([hex_to_int('FFFF3C6B'), hex_to_int('FFFF41A0'), hex_to_int('0000B800')], hex_to_int('FFFF34F4')), # P1
-    ([hex_to_int('0001635B'), hex_to_int('0000F01E'), hex_to_int('FFFF7723')], hex_to_int('000231C0')), # P2
-    ([hex_to_int('FFFF7444'), hex_to_int('FFFF5910'), hex_to_int('0000C78A')], hex_to_int('FFFEF864')), # P3
-    ([hex_to_int('00017B45'), hex_to_int('000100AF'), hex_to_int('FFFF6405')], hex_to_int('0001F850')), # P4
-    ([hex_to_int('0000A9A8'), hex_to_int('0000E423'), hex_to_int('FFFF5977')], hex_to_int('0000D1C8')), # P5
-    ([hex_to_int('000180B3'), hex_to_int('0000EDA4'), hex_to_int('FFFF57AB')], hex_to_int('0001FBE8')), # P6
-    ([hex_to_int('FFFF56F9'), hex_to_int('FFFF29B9'), hex_to_int('0000C122')], hex_to_int('FFFF3A61')), # P7
-    ([hex_to_int('0001407F'), hex_to_int('0000F4FF'), hex_to_int('FFFF4C7E')], hex_to_int('000229CC')), # P8
-    ([hex_to_int('FFFF3474'), hex_to_int('FFFF5D78'), hex_to_int('00009BB0')], hex_to_int('FFFF0B52')), # P9
-]
+    # --- PARSE LAYERS BASED ON MEMORY MAP ---
+    
+    # 1. Generator Hidden (G2) - Rows 0-2 (3 Neurons)
+    g2_layer = []
+    for i in range(0, 3):
+        w = [get_val('w1.hex', i), get_val('w2.hex', i)]
+        b = get_val('bias.hex', i)
+        g2_layer.append((w, b))
+
+    # 2. Generator Output (G3) - Rows 3-11 (9 Neurons)
+    g3_layer = []
+    for i in range(3, 12):
+        w = [get_val('w1.hex', i), get_val('w2.hex', i), get_val('w3.hex', i)]
+        b = get_val('bias.hex', i)
+        g3_layer.append((w, b))
+
+    # 3. Discriminator Hidden (D2) - Rows 12-20 (3 Neurons, 3 Passes each)
+    d2_layer = []
+    base_idx = 12
+    for n in range(3): 
+        # Pass 1
+        p1_w = [get_val(f'w{k}.hex', base_idx) for k in range(1, 5)] 
+        # Pass 2
+        p2_w = [get_val(f'w{k}.hex', base_idx + 1) for k in range(1, 5)]
+        # Pass 3
+        p3_w = [get_val('w1.hex', base_idx + 2)] 
+        
+        full_weights = p1_w + p2_w + p3_w
+        bias = get_val('bias.hex', base_idx + 2) 
+        
+        d2_layer.append((full_weights, bias))
+        base_idx += 3
+
+    # 4. Discriminator Output (D3) - Row 21 (1 Neuron)
+    d3_layer = []
+    idx = 21
+    w = [get_val('w1.hex', idx), get_val('w2.hex', idx), get_val('w3.hex', idx)]
+    b = get_val('bias.hex', idx)
+    d3_layer.append((w, b))
+
+    return g2_layer, g3_layer, d2_layer, d3_layer
 
 # ==========================================
 # 3. RUN SIMULATION
 # ==========================================
-print("--- Python Fixed-Point Verification ---")
+print("\n--- Python Fixed-Point Verification ---")
 
-# Inputs (Test Case 1 Noise)
-# 0.5 and -0.2
-noise_1 = hex_to_int('00008000') 
-noise_2 = hex_to_int('FFFFCCCD') 
+# Load all layers
+g2_layer, g3_layer, d2_layer, d3_layer = load_all_weights()
 
-print(f"Input Noise: {noise_1/65536.0:.4f}, {noise_2/65536.0:.4f}")
+# Inputs (Test Case)
+noise_1 = hex_to_int('00008000') # 0.5
+noise_2 = hex_to_int('FFFFCCCD') # -0.2
+inputs = [noise_1, noise_2]
 
-# --- Step A: Generator Hidden (G2) ---
-# Neuron 1
-sum1 = q_add(q_add(q_mult(noise_1, wg2_1[0]), q_mult(noise_2, wg2_1[1])), bg2_1)
-g2_out1 = q_tanh(sum1)
+# --- STEP A: Generator Hidden (G2) ---
+g2_outputs = []
+for weights, bias in g2_layer:
+    acc = bias
+    for i, w in enumerate(weights):
+        if i < len(inputs):
+            acc = q_add(acc, q_mult(inputs[i], w))
+    g2_outputs.append(q_tanh(acc))
 
-# Neuron 2
-sum2 = q_add(q_add(q_mult(noise_1, wg2_2[0]), q_mult(noise_2, wg2_2[1])), bg2_2)
-g2_out2 = q_tanh(sum2)
+print(f"[G2] Output: {[x/65536.0 for x in g2_outputs]}")
 
-# Neuron 3
-sum3 = q_add(q_add(q_mult(noise_1, wg2_3[0]), q_mult(noise_2, wg2_3[1])), bg2_3)
-g2_out3 = q_tanh(sum3)
+# --- STEP B: Generator Output (G3) ---
+fake_image_int = []
+for weights, bias in g3_layer:
+    acc = bias
+    for i, w in enumerate(weights):
+        if i < len(g2_outputs):
+            acc = q_add(acc, q_mult(g2_outputs[i], w))
+    fake_image_int.append(q_tanh(acc))
 
-print("\nG2 Hidden Layer Outputs:")
-print(f"N1: {g2_out1/65536.0:.4f}")
-print(f"N2: {g2_out2/65536.0:.4f}")
-print(f"N3: {g2_out3/65536.0:.4f}")
+# Convert for Display
+fake_image_float = [x / 65536.0 for x in fake_image_int]
+print(f"[G3] Output: {fake_image_float}")
 
-# --- Step B: Generator Output (G3) ---
-print("\nGenerated Image (Expect Cross Pattern):")
-pixels = []
-for i, (weights, bias) in enumerate(g3_layer):
-    # Sum = (g2_1 * w1) + (g2_2 * w2) + (g2_3 * w3) + bias
-    s = q_add(q_mult(g2_out1, weights[0]), q_mult(g2_out2, weights[1]))
-    s = q_add(s, q_mult(g2_out3, weights[2]))
-    s = q_add(s, bias)
+# --- VISUALIZATION ---
+try:
+    image_grid = np.array(fake_image_float).reshape(3, 3)
+    plt.figure(figsize=(5, 5))
+    plt.imshow(image_grid, cmap='gray', vmin=-1, vmax=1)
+    plt.title(f"Generated Fake Image (3x3)\nNoise: [{noise_1/65536.0:.2f}, {noise_2/65536.0:.2f}]")
+    plt.colorbar(label='Pixel Value')
     
-    pix = q_tanh(s)
-    pixels.append(pix)
+    for i in range(3):
+        for j in range(3):
+            val = image_grid[i, j]
+            text_color = 'white' if val < 0 else 'black'
+            plt.text(j, i, f'{val:.3f}', ha='center', va='center', color=text_color, fontweight='bold')
     
-    # Interpretation
-    val_float = pix / 65536.0
-    char = "X" if val_float > 0.5 else ("." if val_float < -0.5 else "?")
-    
-    # Print as grid
-    if (i+1) % 3 == 0:
-        print(f"{val_float:+.2f} ({char})")
-    else:
-        print(f"{val_float:+.2f} ({char})", end="\t")
+    plt.xticks([])
+    plt.yticks([])
+    plt.show(block=False)
+    plt.pause(1) 
+except Exception as e:
+    print(f"Plotting error: {e}")
+
+# --- STEP C: Discriminator Hidden (D2) ---
+d2_outputs = []
+for weights, bias in d2_layer:
+    acc = bias
+    for i, w in enumerate(weights):
+        if i < len(fake_image_int):
+            acc = q_add(acc, q_mult(fake_image_int[i], w))
+    d2_outputs.append(q_tanh(acc))
+
+print(f"[D2] Output: {[x/65536.0 for x in d2_outputs]}")
+
+# --- STEP D: Discriminator Output (D3) ---
+d3_weights, d3_bias = d3_layer[0] 
+d3_acc = d3_bias
+for i, w in enumerate(d3_weights):
+    if i < len(d2_outputs):
+        d3_acc = q_add(d3_acc, q_mult(d2_outputs[i], w))
+
+final_prob = q_sigmoid(d3_acc)
+
+print(f"\n[D3] Probability: {final_prob/65536.0:.4f} (Hex: {hex(final_prob)})")
