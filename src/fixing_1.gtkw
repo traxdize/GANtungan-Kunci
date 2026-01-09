@@ -1,0 +1,143 @@
+[*]
+[*] GTKWave Analyzer v3.3.118 (w)1999-2023 BSI
+[*] Fri Jan  9 19:57:58 2026
+[*]
+[dumpfile] "D:\teknikelektro\VLSI\GANtungan-Kunci\src\gan_3x3.vcd"
+[dumpfile_mtime] "Fri Jan  9 19:56:26 2026"
+[dumpfile_size] 40004
+[savefile] "D:\teknikelektro\VLSI\GANtungan-Kunci\src\fixing_1.gtkw"
+[timestart] 146600
+[size] 1401 1008
+[pos] -1 -1
+*-15.000000 162900 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_gan3x3.
+[treeopen] tb_gan3x3.u_dut.
+[treeopen] tb_gan3x3.u_dut.u_pe.
+[sst_width] 174
+[signals_width] 377
+[sst_expanded] 1
+[sst_vpaned_height] 301
+@28
+tb_gan3x3.u_dut.acc_step[1:0]
+tb_gan3x3.u_dut.clk
+@22
+tb_gan3x3.u_dut.disc_out[31:0]
+@28
+tb_gan3x3.u_dut.done
+@22
+tb_gan3x3.u_dut.loop_cnt[3:0]
+tb_gan3x3.u_dut.mem_addr[9:0]
+@28
+tb_gan3x3.u_dut.pe_accumulate
+tb_gan3x3.u_dut.pe_act_sel[1:0]
+@24
+tb_gan3x3.u_dut.pipe_cnt[1:0]
+@28
+tb_gan3x3.u_dut.rst
+tb_gan3x3.u_dut.start
+@25
+tb_gan3x3.u_dut.state[2:0]
+@40000420
+[fpshift_count] 16
+tb_gan3x3.u_dut.noise_in1[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.noise_in2[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.pe_partial_sum[31:0]
+@40c00420
+[fpshift_count] 16
+tb_gan3x3.u_dut.pe_result[31:0]
+@28
+(0)tb_gan3x3.u_dut.pe_result[31:0]
+(1)tb_gan3x3.u_dut.pe_result[31:0]
+(2)tb_gan3x3.u_dut.pe_result[31:0]
+(3)tb_gan3x3.u_dut.pe_result[31:0]
+(4)tb_gan3x3.u_dut.pe_result[31:0]
+(5)tb_gan3x3.u_dut.pe_result[31:0]
+(6)tb_gan3x3.u_dut.pe_result[31:0]
+(7)tb_gan3x3.u_dut.pe_result[31:0]
+(8)tb_gan3x3.u_dut.pe_result[31:0]
+(9)tb_gan3x3.u_dut.pe_result[31:0]
+(10)tb_gan3x3.u_dut.pe_result[31:0]
+(11)tb_gan3x3.u_dut.pe_result[31:0]
+(12)tb_gan3x3.u_dut.pe_result[31:0]
+(13)tb_gan3x3.u_dut.pe_result[31:0]
+(14)tb_gan3x3.u_dut.pe_result[31:0]
+(15)tb_gan3x3.u_dut.pe_result[31:0]
+(16)tb_gan3x3.u_dut.pe_result[31:0]
+(17)tb_gan3x3.u_dut.pe_result[31:0]
+(18)tb_gan3x3.u_dut.pe_result[31:0]
+(19)tb_gan3x3.u_dut.pe_result[31:0]
+(20)tb_gan3x3.u_dut.pe_result[31:0]
+(21)tb_gan3x3.u_dut.pe_result[31:0]
+(22)tb_gan3x3.u_dut.pe_result[31:0]
+(23)tb_gan3x3.u_dut.pe_result[31:0]
+(24)tb_gan3x3.u_dut.pe_result[31:0]
+(25)tb_gan3x3.u_dut.pe_result[31:0]
+(26)tb_gan3x3.u_dut.pe_result[31:0]
+(27)tb_gan3x3.u_dut.pe_result[31:0]
+(28)tb_gan3x3.u_dut.pe_result[31:0]
+(29)tb_gan3x3.u_dut.pe_result[31:0]
+(30)tb_gan3x3.u_dut.pe_result[31:0]
+(31)tb_gan3x3.u_dut.pe_result[31:0]
+@1401200
+-group_end
+@40000420
+[fpshift_count] 16
+tb_gan3x3.u_dut.u_pe.sig_out[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.u_pe.tanh_out[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.u_pe.sum_reg[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.pe_x1[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.pe_x2[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.pe_x3[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.pe_x4[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.bias[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.w1[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.w2[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.w3[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.w4[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_0[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_1[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_2[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_3[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_4[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_5[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_6[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_7[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_8[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_9[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_10[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_11[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_12[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_13[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_14[31:0]
+[fpshift_count] 16
+tb_gan3x3.u_dut.ram_out_15[31:0]
+[pattern_trace] 1
+[pattern_trace] 0

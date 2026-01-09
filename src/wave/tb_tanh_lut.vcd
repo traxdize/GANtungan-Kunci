@@ -1,5 +1,5 @@
 $date
-	Sat Dec 13 21:34:58 2025
+	Sat Jan 10 04:07:17 2026
 $end
 $version
 	Icarus Verilog
@@ -8,117 +8,86 @@ $timescale
 	1ps
 $end
 $scope module tb_tanh_lut $end
-$var wire 16 ! a_out [15:0] $end
-$var reg 16 " z_in [15:0] $end
+$var wire 32 ! a_out [31:0] $end
+$var reg 32 " z_in [31:0] $end
 $scope function q_to_float $end
-$var reg 16 # fixed_val [15:0] $end
+$var reg 32 # fixed_val [31:0] $end
 $upscope $end
 $scope module DUT $end
-$var wire 16 $ z_q1_7_8 [15:0] $end
-$var wire 10 % rom_address [9:0] $end
-$var wire 16 & a_tanh [15:0] $end
-$var parameter 32 ' ADDRESS_BITS $end
-$var parameter 32 ( DATA_WIDTH $end
-$var parameter 16 ) MAX_NEGATIVE_VAL $end
-$var parameter 16 * MAX_POSITIVE_VAL $end
-$var parameter 16 + NEG_CLAMP_THRESHOLD $end
-$var parameter 16 , POS_CLAMP_THRESHOLD $end
-$var parameter 42 - ROM_DEPTH $end
+$var wire 32 $ rom_data [31:0] $end
+$var wire 32 % z_in [31:0] $end
+$var wire 32 & z_abs [31:0] $end
+$var wire 10 ' rom_address [9:0] $end
+$var wire 32 ( a_tanh [31:0] $end
+$var parameter 32 ) ADDRESS_BITS $end
+$var parameter 32 * CLAMP_NEG $end
+$var parameter 32 + CLAMP_POS $end
+$var parameter 32 , DATA_WIDTH $end
+$var parameter 32 - MAX_NEGATIVE_VAL $end
+$var parameter 32 . MAX_POSITIVE_VAL $end
+$var parameter 42 / ROM_DEPTH $end
 $upscope $end
 $scope task test_case $end
-$var reg 16 . input_val [15:0] $end
-$var integer 32 / case_num [31:0] $end
+$var reg 32 0 input_val [31:0] $end
+$var integer 32 1 case_num [31:0] $end
 $upscope $end
 $upscope $end
 $enddefinitions $end
 $comment Show the parameter values. $end
 $dumpall
-b10000000000 -
-b11000000000 ,
-b1111101000000000 +
-b100000000 *
-b1111111100000000 )
-b10000 (
-b1010 '
+b10000000000 /
+b10000000000000000 .
+b11111111111111110000000000000000 -
+b100000 ,
+b1100000000000000000 +
+b11111111111110100000000000000000 *
+b1010 )
 $end
 #0
 $dumpvars
-b1 /
-b0 .
-b1111111100000000 &
-b0 %
-b0 $
+b1 1
+b11111111111111111000000011100001 0
+b11111111111111111000101101000111 (
+b111111 '
+b111111100011111 &
+b11111111111111111000000011100001 %
+b111010010111001 $
 bx #
-b0 "
-b1111111100000000 !
+b11111111111111111000000011100001 "
+b11111111111111111000101101000111 !
 $end
 #10000
-b100 %
-b10000000 "
-b10000000 $
-b10000000 .
-b10 /
-b1111111100000000 #
-#20000
-b100000000 !
-b100000000 &
-b1111111100 %
-b1111111110000000 "
-b1111111110000000 $
-b1111111110000000 .
-b11 /
-b1111111100000000 #
-#30000
-b1111111100000000 !
-b1111111100000000 &
-b100111 %
-b10011111111 "
-b10011111111 $
-b10011111111 .
-b100 /
-b100000000 #
-#40000
-b100000000 !
-b100000000 &
-b1111011000 %
-b1111101100000001 "
-b1111101100000001 $
-b1111101100000001 .
-b101 /
-b1111111100000000 #
-#50000
-b1010000 %
-b101000000000 "
-b101000000000 $
-b101000000000 .
-b110 /
-b100000000 #
-#60000
-b1110110000 %
-b1111111100000000 !
-b1111111100000000 &
-b1111011000000000 "
-b1111011000000000 $
-b1111011000000000 .
-b111 /
-b100000000 #
-#70000
-b1111111111 %
-b100000000 !
-b100000000 &
-b111111111111111 "
-b111111111111111 $
-b111111111111111 .
-b1000 /
-b1111111100000000 #
-#80000
+b0 !
+b0 (
+b0 $
+b0 '
+b0 &
+b0 "
 b0 %
-b1111111100000000 !
-b1111111100000000 &
+b0 0
+b10 1
+b11111111111111111000101101000111 #
+#20000
+b111011001001101 !
+b111011001001101 (
+b111011001001101 $
+b1000000 '
+b1000000000000000 &
 b1000000000000000 "
-b1000000000000000 $
-b1000000000000000 .
-b1001 /
-b100000000 #
-#90000
-b1111111100000000 #
+b1000000000000000 %
+b1000000000000000 0
+b11 1
+b0 #
+#30000
+b1111111111111111 $
+b1110000000 '
+b1110000000000000000 &
+b10000000000000000 !
+b10000000000000000 (
+b1110000000000000000 "
+b1110000000000000000 %
+b1110000000000000000 0
+b100 1
+b111011001001101 #
+#40000
+b10000000000000000 #

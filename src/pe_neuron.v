@@ -1,6 +1,12 @@
 // File         : pe_neuron.v
 // Description  : Processing Element (Neuron) module
 
+// sum_reg is on clock edge
+// sig_out and tanh_out is combinational
+// y_out and y_final_reg is clocked
+// So for a single pass, it needs 1 clock (on any edge)
+
+
 `include "tanh_lut.v"
 `include "sigmoid_lut.v"
 
@@ -19,7 +25,7 @@ module pe_neuron #(
 );
 
     // --- STAGE 1: Multiplication (Clocked) ---
-    // Similar to neuronOp p1_reg [cite: 127]
+    // Similar to neuronOp p1_reg
     reg signed [DATA_WIDTH-1:0] p1_reg, p2_reg, p3_reg, p4_reg;
     
     // Multipliers (Combinational part)
@@ -41,7 +47,7 @@ module pe_neuron #(
     end
 
     // --- STAGE 2: Summation (Clocked) ---
-    // Similar to neuronOp y_int_reg [cite: 131]
+    // Similar to neuronOp y_int_reg
     reg signed [DATA_WIDTH-1:0] sum_reg;
     reg [1:0] act_sel_d1, act_sel_d2; // Delay activation select signal to match pipeline
     
@@ -61,7 +67,6 @@ module pe_neuron #(
     end
 
     // --- STAGE 3: Activation / LUT (Clocked Output) ---
-    // Similar to neuronOp y_final_reg [cite: 138]
     wire signed [DATA_WIDTH-1:0] tanh_out, sig_out;
     reg signed [DATA_WIDTH-1:0] y_final_reg;
 

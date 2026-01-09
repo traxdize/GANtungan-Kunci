@@ -5,6 +5,7 @@ param(
 
 & python "generator/weight_bias_generator.py" @WeightArgs
 & python "generator/lut_generator.py"
+& python "generator/visualize_lut.py"
 
 # open a new terminal and run the Verilog testbench there
 $src = Join-Path $PSScriptRoot 'src'

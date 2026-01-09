@@ -1,5 +1,5 @@
 // File         : sigmoid_lut.v
-// Description  : Sigmoid LUT for Q1.15.16 format (32-bit).
+// Description  : Sigmoid LUT for Q16.16 format (High Precision)
 
 module sigmoid_lut (
     input  signed [31:0] z_in,   // Q16.16
@@ -10,31 +10,36 @@ module sigmoid_lut (
     localparam ROM_DEPTH    = 1 << ADDRESS_BITS;
 
     // Saturation values (Q16.16)
-    localparam SIGMOID_MAX_VAL = 32'h00010000; // 1.0
-    localparam SIGMOID_MIN_VAL = 32'h00000000; // 0.0
+    localparam signed [31:0] SIGMOID_MAX_VAL = 32'h00010000; // 1.0
+    localparam signed [31:0] SIGMOID_MIN_VAL = 32'h00000000; // 0.0
 
     // Clamp input magnitude at +/-6.0 (Q16.16)
-    localparam POS_CLAMP_THRESHOLD = 32'h00060000; // +6.0
-    localparam NEG_CLAMP_THRESHOLD = 32'hFFFA0000; // -6.0
+    // LUT covers up to 8.0, so 6.0 is safe.
+    localparam signed [31:0] POS_CLAMP_THRESHOLD = 32'h00060000; // +6.0
+    localparam signed [31:0] NEG_CLAMP_THRESHOLD = 32'hFFFA0000; // -6.0
 
     reg [DATA_WIDTH-1:0] SIGMOID_ROM [0:ROM_DEPTH-1];
 
     initial begin
-        // ROM contents loaded from hex file
-        $readmemh("mem/sigmoid_lut_mem.hex", SIGMOID_ROM);
+        // Ensure path matches Python script output
+        $readmemh("./mem/sigmoid_lut_mem.hex", SIGMOID_ROM);
     end
 
     // Use symmetry: compute abs(z) for lookup
+    // Sigmoid(-x) = 1 - Sigmoid(x)
     wire is_negative = z_in[31];
     wire signed [31:0] z_abs = is_negative ? -z_in : z_in;
 
-    // Address bits selected from fractional range (resolution ~0.125)
-    wire [ADDRESS_BITS-1:0] rom_address = z_abs[22:13];
+    // Address bits selected from fractional range
+    // Bit 9 corresponds to 2^-7 (0.0078125)
+    // Slice [18:9] = 10 bits
+    wire [ADDRESS_BITS-1:0] rom_address = z_abs[18:9];
+    
     wire signed [31:0] rom_data = SIGMOID_ROM[rom_address];
 
     assign a_sigmoid =
-        (z_in >= $signed(POS_CLAMP_THRESHOLD)) ? SIGMOID_MAX_VAL :
-        (z_in <= $signed(NEG_CLAMP_THRESHOLD)) ? SIGMOID_MIN_VAL :
+        (z_in >= POS_CLAMP_THRESHOLD) ? SIGMOID_MAX_VAL :
+        (z_in <= NEG_CLAMP_THRESHOLD) ? SIGMOID_MIN_VAL :
         (is_negative ? (SIGMOID_MAX_VAL - rom_data) : rom_data);
 
 endmodule
