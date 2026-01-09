@@ -23,14 +23,14 @@ DGL = 2;                 % DとGの学習比D/G = 2 -> D:G = 2:1
 
 % ======== Train data, 学習データ ========
 % Diagonal Line
-diag_line = [ 1 -1 1; ...
+obj_1 = [ 1 -1 1; ...
              1  -1 1; ...
              1 -1  1]';
 
 % Vertical Bar
 
 % Combine the new patterns into the data matrix
-data = [diag_line(:)'];
+data = [obj_1(:)'];
 num_data = size(data,1);
 
 % ===  Loss data 損失記録変数 ===
