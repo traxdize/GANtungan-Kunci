@@ -1,13 +1,13 @@
 // File         : pe_neuron.v
 // Description  : Processing Element (Neuron) module
-// Fixed point   : Q8.24 (32-bit signed: 8 integer bits, 24 fractional bits)
-
+// Fixed point  : Parameterized (Default Q8.24)
 
 `include "tanh_lut.v"
 `include "sigmoid_lut.v"
 
 module pe_neuron #(
-    parameter DATA_WIDTH = 32
+    parameter DATA_WIDTH = 32,
+    parameter FRAC_WIDTH = 28  // Number of fractional bits (e.g., 24 for Q8.24, 16 for Q16.16)
 ) (
     input wire clk,
     input wire rst,
@@ -33,11 +33,11 @@ module pe_neuron #(
         if (!rst) begin
             p1_reg <= 0; p2_reg <= 0; p3_reg <= 0; p4_reg <= 0;
         end else begin
-            // Shift down to Q8.24 and register (fractional bits = 24)
-            p1_reg <= p1_long >>> 24;
-            p2_reg <= p2_long >>> 24;
-            p3_reg <= p3_long >>> 24;
-            p4_reg <= p4_long >>> 24;
+            // Shift down based on FRAC_WIDTH to maintain fixed-point alignment
+            p1_reg <= p1_long >>> FRAC_WIDTH;
+            p2_reg <= p2_long >>> FRAC_WIDTH;
+            p3_reg <= p3_long >>> FRAC_WIDTH;
+            p4_reg <= p4_long >>> FRAC_WIDTH;
         end
     end
 
@@ -64,9 +64,22 @@ module pe_neuron #(
     wire signed [DATA_WIDTH-1:0] tanh_out, sig_out;
     reg signed [DATA_WIDTH-1:0] y_final_reg;
 
-    // Combinational Activation Function before getting outputted to y_out/y_final_reg clocked
-    tanh_lut u_tanh (.z_in(sum_reg), .a_tanh(tanh_out));
-    sigmoid_lut u_sig (.z_in(sum_reg), .a_sigmoid(sig_out));
+    // Instantiate LUTs with parameters
+    tanh_lut #(
+        .DATA_WIDTH(DATA_WIDTH), 
+        .FRAC_WIDTH(FRAC_WIDTH)
+    ) u_tanh (
+        .z_in(sum_reg), 
+        .a_tanh(tanh_out)
+    );
+
+    sigmoid_lut #(
+        .DATA_WIDTH(DATA_WIDTH), 
+        .FRAC_WIDTH(FRAC_WIDTH)
+    ) u_sig (
+        .z_in(sum_reg), 
+        .a_sigmoid(sig_out)
+    );
 
     always @(posedge clk or negedge rst) begin
         if (!rst) y_final_reg <= 0;

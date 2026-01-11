@@ -14,11 +14,12 @@ module tb_sigmoid_lut;
         .a_sigmoid (a_out)
     );
 
-    // --- Helper: Q8.24 to Float ---
+    // --- Helper: Q<FRAC> to Float ---
+    localparam integer FRAC_WIDTH = 24;
     function real q2f;
         input [31:0] val;
         begin
-            q2f = $signed(val) / 16777216.0; // 2^24
+            q2f = $signed(val) / (2.0 ** FRAC_WIDTH);
         end
     endfunction
 
@@ -27,7 +28,7 @@ module tb_sigmoid_lut;
         $dumpvars(0, tb_sigmoid_lut);
 
         $display("");
-        $display("SIGMOID LUT Simulation (Q8.24)");
+        $display("SIGMOID LUT Simulation (FRAC_WIDTH=%0d)", FRAC_WIDTH);
         $display("");
 
         // Tests

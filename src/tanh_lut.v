@@ -1,21 +1,24 @@
 // File         : tanh_lut.v
-// Description  : Tanh LUT for Q8.24 format
+// Description  : Tanh LUT for Parameterized Fixed Point
 
-module tanh_lut (
-    input  signed [31:0] z_in,   // Q8.24
-    output signed [31:0] a_tanh  // Q8.24
+module tanh_lut #(
+    parameter DATA_WIDTH = 32,
+    parameter FRAC_WIDTH = 24
+)(
+    input  signed [DATA_WIDTH-1:0] z_in,
+    output signed [DATA_WIDTH-1:0] a_tanh
 );
     localparam ADDRESS_BITS = 10; 
-    localparam DATA_WIDTH   = 32;
     localparam ROM_DEPTH    = 1 << ADDRESS_BITS;
 
-    // Saturation limits (Q8.24)
-    localparam signed [31:0] MAX_POSITIVE_VAL = 32'h01000000; // +1.0
-    localparam signed [31:0] MAX_NEGATIVE_VAL = 32'hFF000000; // -1.0
+    // Saturation limits calculated dynamically
+    // 1.0 represented as 1 shifted by FRAC_WIDTH
+    localparam signed [DATA_WIDTH-1:0] MAX_POSITIVE_VAL = (1 <<< FRAC_WIDTH); 
+    localparam signed [DATA_WIDTH-1:0] MAX_NEGATIVE_VAL = -(1 <<< FRAC_WIDTH);
 
-    // Clamp thresholds (±6.0 Q8.24)
-    localparam signed [31:0] CLAMP_POS = 32'h06000000; // +6.0
-    localparam signed [31:0] CLAMP_NEG = 32'hFA000000; // -6.0
+    // Clamp thresholds (±6.0)
+    localparam signed [DATA_WIDTH-1:0] CLAMP_POS = (6 <<< FRAC_WIDTH);
+    localparam signed [DATA_WIDTH-1:0] CLAMP_NEG = -(6 <<< FRAC_WIDTH);
 
     reg [DATA_WIDTH-1:0] TANH_ROM [0:ROM_DEPTH-1];
 
@@ -23,17 +26,24 @@ module tanh_lut (
     initial begin
         $readmemh("./mem/tanh_lut_mem.hex", TANH_ROM);
     end
+    
     // Use absolute value (symmetric LUT)
-    wire signed [31:0] z_abs = z_in[31] ? -z_in : z_in;
+    wire signed [DATA_WIDTH-1:0] z_abs = z_in[DATA_WIDTH-1] ? -z_in : z_in;
 
-    // Address: take bits [26:17] to index LUT (step = 2^-7)
-    wire [ADDRESS_BITS-1:0] rom_address = z_abs[26:17];
-    wire signed [31:0] rom_data = TANH_ROM[rom_address];
+    // Address Indexing Logic:
+    // We want to capture the integer part and the most significant fractional bits.
+    // For Q8.24, we used bits [26:17].
+    // 26 = FRAC_WIDTH + 2
+    // 17 = FRAC_WIDTH - 7
+    // This maintains the same input range mapping for the LUT regardless of Q format.
+    wire [ADDRESS_BITS-1:0] rom_address = z_abs[FRAC_WIDTH+2 : FRAC_WIDTH-7];
+    
+    wire signed [DATA_WIDTH-1:0] rom_data = TANH_ROM[rom_address];
 
     // Output: clamp then apply sign
     assign a_tanh =
         (z_in >= CLAMP_POS) ? MAX_POSITIVE_VAL :
         (z_in <= CLAMP_NEG) ? MAX_NEGATIVE_VAL :
-        (z_in[31] ? -rom_data : rom_data);
+        (z_in[DATA_WIDTH-1] ? -rom_data : rom_data);
 
 endmodule

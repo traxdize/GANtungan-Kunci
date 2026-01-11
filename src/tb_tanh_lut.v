@@ -15,11 +15,12 @@ module tb_tanh_lut;
         .a_tanh   (a_out)
     );
 
-    // --- Utility Function: Convert Q8.24 Fixed-Point to Float ---
+    // --- Utility Function: Convert Q<FRAC> Fixed-Point to Float ---
+    localparam integer FRAC_WIDTH = 24;
     function real q_to_float;
         input [31:0] fixed_val;
         begin
-            q_to_float = $signed(fixed_val) / 16777216.0; // 2^24
+            q_to_float = $signed(fixed_val) / (2.0 ** FRAC_WIDTH);
         end
     endfunction
 
@@ -31,7 +32,7 @@ module tb_tanh_lut;
         $dumpvars(0, tb_tanh_lut);
 
         $display("");
-        $display("TANH LUT Simulation (Q8.24)");
+        $display("TANH LUT Simulation (FRAC_WIDTH=%0d)", FRAC_WIDTH);
         $display("");
 
         // Tests
