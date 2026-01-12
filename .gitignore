@@ -1,5 +1,6 @@
 
 *.out
+*.vcd
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/matlab,python
