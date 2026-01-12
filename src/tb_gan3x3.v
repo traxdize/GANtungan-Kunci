@@ -51,8 +51,8 @@ module tb_gan3x3;
         #20;
         @(negedge clk);
         $display("\n--- Test Case 1: Noise [0.5, -0.2] ---");
-        noise_in1 = 32'h0000_FFFF;  // 0.5
-        noise_in2 = 32'hFFFF_CCCD;  // -0.2
+        noise_in1 = 32'h00008000;  // 0.5 FFFF_0000
+        noise_in2 = 32'hFFFFCCCD;  // -0.2 0001_0000
         start = 1;
         
         @(negedge clk);
@@ -94,8 +94,8 @@ module tb_gan3x3;
         #50;
         @(negedge clk); 
         $display("\n--- Test Case 2: Noise [-1.0, 1.0] ---");
-        noise_in1 = 32'hFFFF_0000; // -1.0
-        noise_in2 = 32'h0001_0000; //  1.0
+        noise_in1 = 32'h00008000; // -1.0
+        noise_in2 = 32'hFFFFCCCD; //  1.0
         start = 1;
         
         @(negedge clk);
