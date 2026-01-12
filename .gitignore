@@ -216,3 +216,4 @@ src/a.out
 src/gan_waveform.vcd
 
 src/*.out
+src/gan3x3
